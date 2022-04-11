@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     } 
     printf("Taille reçu : %lu\n", size);
     char* res = (char*)malloc(size*sizeof(char));
-    if(recv(dS, &res, size*sizeof(char), 0) == -1){
+    if(recv(dS, res, size*sizeof(char), 0) == -1){
         perror("Erreur message reçu\n");
         exit(0);
     } 
@@ -45,13 +45,15 @@ int main(int argc, char *argv[]) {
     fgets(m, 50, stdin);
     u_long taille = strlen(m)+1;
     printf("Taille message : %lu\n", taille);
-    send(dS, &taille, sizeof(u_long), 0);
-    send(dS, m, taille, 0);
+    if(send(dS, &taille, sizeof(u_long), 0) == -1){
+      perror("Erreur envoi taille\n");
+      exit(0);
+    }
+    if(send(dS, m, taille, 0) == -1){
+      perror("Erreur envoi message\n");
+      exit(0);
+    }
     printf("Message Envoyé \n");
-
-    u_long r;
-    recv(dS, &r, sizeof(u_long), 0) ;
-    printf("Réponse reçue : %lu\n", r) ;
   }
   
   shutdown(dS,2) ;

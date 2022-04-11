@@ -35,50 +35,58 @@ int main(int argc, char *argv[]) {
 
   struct sockaddr_in aC ;
   socklen_t lg = sizeof(struct sockaddr_in) ;
-  int connection = 1;
+  int connection = 0;
+  int maxConnection = 2;
   int sockets[2];
-  while (connection <= 2){
-      sockets[connection-1] = accept(dS, (struct sockaddr*) &aC, &lg);
-      printf("Client %d Connecté\n", connection);
+  while (connection < maxConnection){
+      sockets[connection] = accept(dS, (struct sockaddr*) &aC, &lg);
+      printf("Client %d Connecté\n", connection+1);
       connection += 1;
   }
   char *msg;
   char* ok = "ok";
   u_long taille;
   taille = strlen(ok);
-  int res_size1 = send(sockets[0], &taille, sizeof(u_long), 0);
-  if (res_size1 == -1)
+  if (send(sockets[0], &taille, sizeof(u_long), 0) == -1)
   {
-      perror("Erreur envoi taille");
+      perror("Erreur envoi taille\n");
+      exit(0);
   }
-  int res_role = send(sockets[0], ok, taille*sizeof(char), 0);
-  if (res_role == -1)
+  if (send(sockets[0], ok, taille*sizeof(char), 0) == -1)
   {
-      perror("Erreur envoi tour");
+      perror("Erreur envoi tour\n");
+      exit(0);
   }
+
+  int client = 0;
+
   while (strcmp(msg,"quit\n")!=0)
   {
-    recv(sockets[0], &taille, sizeof(u_long),0);
-
+    if(recv(sockets[client%maxConnection], &taille, sizeof(u_long),0) == -1){
+      perror("Erreur recep taille\n");
+      exit(0);
+    }
+    printf("Val : %d\n", client%maxConnection);
     char* msg = (char*)malloc(taille);
-    recv(sockets[0], msg, taille, 0);
+    if(recv(sockets[client%maxConnection], msg, taille, 0) == -1){
+      perror("Erreur recep msg\n");
+      exit(0);
+    }
     printf("Message reçu : %s", msg) ;
     
     
-    int res_size2 = send(sockets[1], &taille, sizeof(u_long), 0);
-    if (res_size2 == -1)
+    if (send(sockets[(client+1)%maxConnection], &taille, sizeof(u_long), 0) == -1)
     {
-      perror("Erreur envoi taille");
+      perror("Erreur envoi taille\n");
     }
 
-    int res_msg = send(sockets[1], msg, taille, 0);
-    if (res_msg == -1)
+    if (send(sockets[(client+1)%maxConnection], msg, taille, 0) == -1)
     {
-      perror("Erreur envoi message");
+      perror("Erreur envoi message\n");
     }
     printf("Message Envoyé\n");
     free(msg);
-    
+    client += 1;
   }
   shutdown(sockets[0], 2);
   shutdown(sockets[1], 2);
