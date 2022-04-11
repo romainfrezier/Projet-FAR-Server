@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   printf("Socket Connecté\n");
 
   char *m = (char*)malloc(MAX*sizeof(char));
-  while (strcmp(m, "quit\n") != 0)
+  while (1)
   {
     u_long size;
     if(recv(dS, &size, sizeof(u_long), 0) == -1){
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
         exit(0);
     } 
     printf("Message reçu : %s\n", res);
-    printf("Entrez votre message ('quit' pour quitter) : ");
+    printf("Entrez votre message (50 max) : ");
     fgets(m, 50, stdin);
     printf("message choisi : %s \n", m);
     u_long taille = strlen(m)+1;

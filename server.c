@@ -60,13 +60,12 @@ int main(int argc, char *argv[]) {
 
   int client = 0;
 
-  while (strcmp(msg,"quit\n")!=0)
+  while (1)
   {
     if(recv(sockets[client%maxConnection], &taille, sizeof(u_long),0) == -1){
       perror("Erreur recep taille\n");
       exit(0);
     }
-    printf("Val : %d\n", client%maxConnection);
     char* msg = (char*)malloc(taille);
     if(recv(sockets[client%maxConnection], msg, taille, 0) == -1){
       perror("Erreur recep msg\n");
