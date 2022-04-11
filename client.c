@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+#define MAX 100
 
 int main(int argc, char *argv[]) {
 
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
   connect(dS, (struct sockaddr *) &aS, lgA) ;
   printf("Socket Connecté\n");
 
-  char *m;
+  char *m = (char*)malloc(MAX*sizeof(char));
   while (strcmp(m, "quit\n") != 0)
   {
     u_long size;
@@ -43,6 +44,7 @@ int main(int argc, char *argv[]) {
     printf("Message reçu : %s\n", res);
     printf("Entrez votre message ('quit' pour quitter) : ");
     fgets(m, 50, stdin);
+    printf("message choisi : %s \n", m);
     u_long taille = strlen(m)+1;
     printf("Taille message : %lu\n", taille);
     if(send(dS, &taille, sizeof(u_long), 0) == -1){
@@ -55,7 +57,7 @@ int main(int argc, char *argv[]) {
     }
     printf("Message Envoyé \n");
   }
-  
+  free(m);
   shutdown(dS,2) ;
   printf("Fin du programme \n");
 }
