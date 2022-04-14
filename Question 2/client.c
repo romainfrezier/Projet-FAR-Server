@@ -18,6 +18,7 @@
           perror("Error message size received\n");
           exit(0);
       } 
+      
       printf("Size received : %lu\n", size);
       
       // Message Receive
