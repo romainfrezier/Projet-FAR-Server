@@ -7,7 +7,8 @@ typedef struct thread_sockets_receive tsr;
 struct thread_sockets_receive
 {
     int client;
-    int *clients;
+    int **clients;
+    int *nb_client;
 };
 
 typedef struct thread_sockets_send tss;
@@ -17,6 +18,7 @@ struct thread_sockets_send
     int size;
     char *message;
     int client;
+    int *nb_client;
 };
 
 

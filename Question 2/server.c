@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   struct sockaddr_in aC ;
   socklen_t lg = sizeof(struct sockaddr_in) ;
   int connection = 0;
-  int sockets[MAX_CONNECTION];
+  int *sockets = (int*)malloc(sizeof(int)*MAX_CONNECTION);
 
   while (1)
   {
@@ -52,7 +52,8 @@ int main(int argc, char *argv[]) {
       printf("idclientconnecté = %d\n", sockets[connection]);
       tsr *receiveData = (tsr *)malloc(sizeof(tsr));
       (*receiveData).client = sockets[connection];
-      (*receiveData).clients = sockets;
+      (*receiveData).clients = &sockets;
+      (*receiveData).nb_client = &connection;
       pthread_t receive;
       printf("idclientconnecté2 = %d\n", (*receiveData).client);
       pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
@@ -73,6 +74,7 @@ void sendMessage(void* sock_client){
   if (send((*sock_cli).client, &((*sock_cli).size), sizeof(u_long), 0) == -1)
   {
     perror("Erreur envoi taille\n");
+    printf("erreur pour le socket id : %d" , (*sock_cli).client);
   }
 
   if (send((*sock_cli).client, (*sock_cli).message, (*sock_cli).size, 0) == -1)
@@ -99,16 +101,20 @@ void receiveMessage(void* sock_client){
       }
       printf("Message reçu : %s", msg);
       pthread_t send;
-      size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof(*sock_cli).clients[0]); 
-      printf("taille tableau sockets %d\n", array_size);
-      for (int i = 0; i < array_size; i++){
-        tss* sendData = (tss*)malloc(sizeof(tss));
-        (*sendData).client = (*sock_cli).clients[i];
-        (*sendData).size = taille;
-        (*sendData).message = msg;
-        //exécution des threads
-        printf("id client %d : : %d\n", i, (*sendData).client);
-        pthread_create(&send, NULL, sendMessage, (void*) sendData);
+      size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof((*sock_cli).clients[0])); 
+      printf("taille tableau sockets %d\n", (*(*sock_cli).nb_client));
+      for (int i = 0; i < (*(*sock_cli).nb_client); i++){
+        if ((*(*sock_cli).clients[i]) != (*sock_cli).client)
+          {
+            tss *sendData = (tss *)malloc(sizeof(tss));
+            (*sendData).client = (*(*sock_cli).clients[i]);
+            (*sendData).size = taille;
+            (*sendData).message = msg;
+            (*sendData).nb_client = (*sock_cli).nb_client;
+            // exécution des threads
+            printf("id client %d : %d\n", i, (*sendData).client);
+            pthread_create(&send, NULL, sendMessage, (void *)sendData);
+          }
       }
     }
     free(msg);
