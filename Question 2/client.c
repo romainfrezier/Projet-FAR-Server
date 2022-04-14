@@ -6,59 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include "client.h"
 
 #define MAX 100
-
-  void receiveMessage(int socket){
-    char *m = (char*)malloc(MAX*sizeof(char));
-    // Size Receive
-    while (1){
-      u_long size;
-      if(recv(socket, &size, sizeof(u_long), 0) == -1){
-          perror("Error message size received\n");
-          exit(0);
-      } 
-      
-      printf("Size received : %lu\n", size);
-      
-      // Message Receive
-      char* res = (char*)malloc(size*sizeof(char));
-      if(recv(socket, res, size*sizeof(char), 0) == -1){
-          perror("Error message received\n");
-          exit(0);
-      } 
-      printf("Message received : %s\n", res);
-    }
-    free(m);
-  }
-
-
-  void sendMessage(int socket){
-    char *m = (char*)malloc(MAX*sizeof(char));
-    while(1){
-      // Entrée utilisateur
-      printf("Enter your message (100 max) : ");
-      fgets(m, 100, stdin);
-      printf("Message : %s \n", m);
-      u_long taille = strlen(m)+1;
-      printf("Message size : %lu\n", taille);
-      
-      // Envoi taille message
-      if(send(socket, &taille, sizeof(u_long), 0) == -1){
-        perror("Error sending size\n");
-        exit(0);
-      }
-      
-      // Envoi message
-      if(send(socket, m, taille, 0) == -1){
-        perror("Error sending message\n");
-        exit(0);
-      }
-      printf("Message send \n");
-    }
-    free(m);
-  }
-
 
 //On veut un thread qui gère l'envoi et un autre qui gère la réception
 int main(int argc, char *argv[]) {
@@ -95,3 +45,53 @@ int main(int argc, char *argv[]) {
   shutdown(dS,2) ;
   printf("End program \n");
 }
+  void receiveMessage(int socket){
+    char *m = (char*)malloc(MAX*sizeof(char));
+    // Size Receive
+    while (1){
+      u_long size;
+      if(recv(socket, &size, sizeof(u_long), 0) == -1){
+          perror("Error message size received\n");
+          exit(0);
+      } 
+      
+      printf("Size received : %lu\n", size);
+      
+      // Message Receive
+      char* res = (char*)malloc(size*sizeof(char));
+      if(recv(socket, res, size*sizeof(char), 0) == -1){
+          perror("Error message received\n");
+          exit(0);
+      } 
+      printf("Message received : %s\n", res);
+    }
+    free(m);
+  }
+
+  void sendMessage(int socket){
+    char *m = (char*)malloc(MAX*sizeof(char));
+    while(1){
+      // Entrée utilisateur
+      printf("Enter your message (100 max) : ");
+      fgets(m, 100, stdin);
+      printf("Message : %s \n", m);
+      u_long taille = strlen(m)+1;
+      printf("Message size : %lu\n", taille);
+      
+      // Envoi taille message
+      if(send(socket, &taille, sizeof(u_long), 0) == -1){
+        perror("Error sending size\n");
+        exit(0);
+      }
+      
+      // Envoi message
+      if(send(socket, m, taille, 0) == -1){
+        perror("Error sending message\n");
+        exit(0);
+      }
+      printf("Message send \n");
+    }
+    free(m);
+  }
+
+
