@@ -1,96 +1,94 @@
 #include <stdio.h>
-#include <stdio.h>
-#include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
-#include "client.h"
 
-#define MAX 100
-
-//On veut un thread qui gère l'envoi et un autre qui gère la réception
 int main(int argc, char *argv[]) {
 
-  if (argc!=3) {
-    perror("Usage : ./exe IP port");
+  if (argc!=2) {
+    printf("mauvaise utilisation : manque d'arg");
+    printf("utilisation : ./exe port");
+    exit(0);
   }
 
-  if (atoi(argv[2])<=1024) {
-    perror("Bad port: must be greater than 1024");
+  if (atoi(argv[1]) <= 1024)
+  {
+    perror("Port incorrect : doit être supérieur à 1024");
   }
 
-  printf("Start program\n");
+  printf("Début programme\n");
+
   int dS = socket(PF_INET, SOCK_STREAM, 0);
-  printf("Socket created\n");
+  printf("Socket Créé\n");
 
-  struct sockaddr_in aS;
-  aS.sin_family = AF_INET;
-  inet_pton(AF_INET,argv[1],&(aS.sin_addr)) ;
-  aS.sin_port = htons(atoi(argv[2])) ;
-  socklen_t lgA = sizeof(struct sockaddr_in) ;
-  connect(dS, (struct sockaddr *) &aS, lgA) ;
-  printf("Socket connected\n");
-  
-  //exécution des threads
-  pthread_t send;
-  pthread_t receive;
-  pthread_create(&send, NULL, sendMessage, dS);
-  pthread_create(&receive, NULL, receiveMessage, dS);
-  
-  //attente fin threads
-  pthread_join(send, 0);
-  pthread_join(receive, 0);
-  shutdown(dS,2) ;
-  printf("End program \n");
+
+  struct sockaddr_in ad;
+  ad.sin_family = AF_INET;
+  ad.sin_addr.s_addr = INADDR_ANY ;
+  ad.sin_port = htons(atoi(argv[1])) ;
+  bind(dS, (struct sockaddr*)&ad, sizeof(ad)) ;
+  printf("Socket Nommé\n");
+
+  listen(dS, 1) ;
+  printf("Mode écoute\n");
+
+  struct sockaddr_in aC ;
+  socklen_t lg = sizeof(struct sockaddr_in) ;
+  int connection = 0;
+  int maxConnection = 2;
+  int sockets[2];
+  while (connection < maxConnection){
+      sockets[connection] = accept(dS, (struct sockaddr*) &aC, &lg);
+      printf("Client %d Connecté\n", connection+1);
+      connection += 1;
+  }
+  char *msg;
+  char* ok = "ok";
+  u_long taille;
+  taille = strlen(ok);
+  if (send(sockets[0], &taille, sizeof(u_long), 0) == -1)
+  {
+      perror("Erreur envoi taille\n");
+      exit(0);
+  }
+  if (send(sockets[0], ok, taille*sizeof(char), 0) == -1)
+  {
+      perror("Erreur envoi tour\n");
+      exit(0);
+  }
+
+  int client = 0;
+
+  while (1)
+  {
+    if(recv(sockets[client%maxConnection], &taille, sizeof(u_long),0) == -1){
+      perror("Erreur recep taille\n");
+      exit(0);
+    }
+    char* msg = (char*)malloc(taille);
+    if(recv(sockets[client%maxConnection], msg, taille, 0) == -1){
+      perror("Erreur recep msg\n");
+      exit(0);
+    }
+    printf("Message reçu : %s", msg) ;
+    
+    
+    if (send(sockets[(client+1)%maxConnection], &taille, sizeof(u_long), 0) == -1)
+    {
+      perror("Erreur envoi taille\n");
+    }
+
+    if (send(sockets[(client+1)%maxConnection], msg, taille, 0) == -1)
+    {
+      perror("Erreur envoi message\n");
+    }
+    printf("Message Envoyé\n");
+    free(msg);
+    client += 1;
+  }
+  shutdown(sockets[0], 2);
+  shutdown(sockets[1], 2);
+  shutdown(dS, 2) ;
+  printf("Fin du programme \n");
 }
-
-  void receiveMessage(int socket){
-    char *m = (char*)malloc(MAX*sizeof(char));
-    // Size Receive
-    while (1){
-      u_long size;
-      if(recv(socket, &size, sizeof(u_long), 0) == -1){
-          perror("Error message size received\n");
-          exit(0);
-      } 
-      printf("Size received : %lu\n", size);
-      
-      // Message Receive
-      char* res = (char*)malloc(size*sizeof(char));
-      if(recv(socket, res, size*sizeof(char), 0) == -1){
-          perror("Error message received\n");
-          exit(0);
-      } 
-      printf("Message received : %s\n", res);
-    }
-    free(m);
-  }
-
-
-  void sendMessage(int socket){
-    char *m = (char*)malloc(MAX*sizeof(char));
-    while(1){
-      // Entrée utilisateur
-      printf("Enter your message (100 max) : ");
-      fgets(m, 100, stdin);
-      printf("Message : %s \n", m);
-      u_long taille = strlen(m)+1;
-      printf("Message size : %lu\n", taille);
-      
-      // Envoi taille message
-      if(send(socket, &taille, sizeof(u_long), 0) == -1){
-        perror("Error sending size\n");
-        exit(0);
-      }
-      
-      // Envoi message
-      if(send(socket, m, taille, 0) == -1){
-        perror("Error sending message\n");
-        exit(0);
-      }
-      printf("Message send \n");
-    }
-    free(m);
-  }
