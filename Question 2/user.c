@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "client.h"
+#include "user.h"
 
 #define MAX 100
 
@@ -76,7 +76,7 @@ void receiveMessage(int socket){
 
 void sendMessage(int socket){
   char *m = (char*)malloc(MAX*sizeof(char));
-  while(1)
+  while(strcmp(m,"/quit") != 0)
   {
     // User input
     printf("Enter your message (100 max) : \n");
@@ -98,16 +98,9 @@ void sendMessage(int socket){
       perror("Error sending message\n");
       exit(0);
     }
-
-    if (strcmp(m,"/quit") == 0) {
-      printf("leave the messagery");
-      exit(0);
-    }
-    else {
-      printf("Message send \n");
-    }
   }
   free(m);
+  exit(0);
 }
 
 

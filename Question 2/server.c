@@ -4,19 +4,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include "server.h"
+#include "list.h"
 #include <pthread.h>
 
 #define MAX_CONNECTION 3
 
 int connection = 0;
-int *sockets;
+List *sockets;
 // We want to create a send thread and a recption thread for each user
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
   // Definition of the socket array to the desired size
-  sockets = (int*)malloc(sizeof(int)*MAX_CONNECTION);
+  sockets = createList();
 
-  if (argc!=2) 
+  if (argc != 2)
   {
     printf("Usage : ./exe port");
     exit(0);
@@ -32,19 +34,18 @@ int main(int argc, char *argv[]) {
   int dS = socket(PF_INET, SOCK_STREAM, 0);
   printf("Socket created\n");
 
-
   struct sockaddr_in ad;
   ad.sin_family = AF_INET;
-  ad.sin_addr.s_addr = INADDR_ANY ;
-  ad.sin_port = htons(atoi(argv[1])) ;
-  bind(dS, (struct sockaddr*)&ad, sizeof(ad)) ;
+  ad.sin_addr.s_addr = INADDR_ANY;
+  ad.sin_port = htons(atoi(argv[1]));
+  bind(dS, (struct sockaddr *)&ad, sizeof(ad));
   printf("Socket named\n");
 
-  listen(dS, MAX_CONNECTION) ;
+  listen(dS, MAX_CONNECTION);
   printf("Listening mode\n");
 
-  struct sockaddr_in aC ;
-  socklen_t lg = sizeof(struct sockaddr_in) ;
+  struct sockaddr_in aC;
+  socklen_t lg = sizeof(struct sockaddr_in);
 
   while (1)
   {
@@ -52,12 +53,12 @@ int main(int argc, char *argv[]) {
     while (connection < MAX_CONNECTION)
     {
       int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
-      sockets[connection] = acceptation;
-      printf("User %d connected with id : %d\n", connection + 1, sockets[connection]);
+      addFirst(sockets, acceptation);
+      printf("User %d connected with id : %d\n", connection + 1, acceptation);
 
       // and we attributed a reception thread to each
       tsr *receiveData = (tsr *)malloc(sizeof(tsr));
-      (*receiveData).client = sockets[connection];
+      (*receiveData).client = acceptation;
       (*receiveData).clients = sockets;
       pthread_t receive;
       pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
@@ -67,19 +68,22 @@ int main(int argc, char *argv[]) {
     }
   }
   // Shutdown of all user sockets
-  for (int i = 0; i < sizeof(sockets); i++)
+  Link *current = sockets->head;
+  do
   {
-    shutdown(sockets[i], 2);
-  }
+    delVal(sockets, current->value);
+    shutdown(current->value, 2);
+  } while (current->next != NULL);
 
   // Server shutdown
   shutdown(dS, 2);
   printf("End program\n");
 }
 
-void transmitMessage(void* sock_client){
-  tss* sock_cli = (tss*)sock_client;
-  
+void transmitMessage(void *sock_client)
+{
+  tss *sock_cli = (tss *)sock_client;
+
   // Transmit message size
   if (send((*sock_cli).client, &((*sock_cli).size), sizeof(u_long), 0) == -1)
   {
@@ -96,43 +100,53 @@ void transmitMessage(void* sock_client){
   printf("Message transmitted\n");
 }
 
-void receiveMessage(void* sock_client){
-  tsr* sock_cli = (tsr*)sock_client;
+void receiveMessage(void *sock_client)
+{
+  tsr *sock_cli = (tsr *)sock_client;
   char *msg;
   u_long size;
-  while(1)
+  while (1)
   {
     // Size reception
-    if(recv((*sock_cli).client, &size, sizeof(u_long),0) == -1)
+    if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
     {
       perror("Error message size received\n");
       exit(0);
     }
     printf("Size received : %lu\n", size);
-    
+
     // Message reception
-    char* msg = (char*)malloc(size);
-    if(recv((*sock_cli).client, msg, size, 0) == -1)
+    char *msg = (char *)malloc(size);
+    if (recv((*sock_cli).client, msg, size, 0) == -1)
     {
       perror("Error message received\n");
       exit(0);
     }
     printf("Message received : %s", msg);
 
-    // Send to each user
-    pthread_t send;
-    size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof((*sock_cli).clients[0])); 
-    for (int i = 0; i < connection; i++)
+    if (strcmp(msg, "/quit") == 0)
     {
-      if ((*sock_cli).clients[i] != (*sock_cli).client)
+      delVal(sockets, (*sock_cli).client);
+      shutdown((*sock_cli).client, 2);
+      
+    }
+    else
+    {
+      // Send to each user
+      pthread_t send;
+      size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof((*sock_cli).clients[0]));
+      for (int i = 0; i < connection; i++)
       {
-        tss *sendData = (tss *)malloc(sizeof(tss));
-        (*sendData).client = (*sock_cli).clients[i];
-        (*sendData).size = size;
-        (*sendData).message = msg;
+        if ((*sock_cli).clients[i] != (*sock_cli).client)
+        {
+          tss *sendData = (tss *)malloc(sizeof(tss));
+          (*sendData).client = (*sock_cli).clients[i];
+          (*sendData).size = size;
+          (*sendData).message = msg;
 
-        // Execution of threads
-        pthread_create(&send, NULL, transmitMessage, (void *)sendData);
+          // Execution of threads
+          pthread_create(&send, NULL, transmitMessage, (void *)sendData);
+        }
       }
     }
   }
