@@ -10,7 +10,6 @@
 
 int connection = 0;
 int *sockets;
-
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[]) {
 
