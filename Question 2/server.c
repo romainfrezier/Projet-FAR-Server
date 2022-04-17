@@ -6,7 +6,7 @@
 #include "server.h"
 #include <pthread.h>
 
-#define MAX_CONNECTION 5
+#define MAX_CONNECTION 3
 
 int connection = 0;
 int *sockets;

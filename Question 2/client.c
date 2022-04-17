@@ -98,7 +98,14 @@ void sendMessage(int socket){
       perror("Error sending message\n");
       exit(0);
     }
-    printf("Message send \n");
+
+    if (strcmp(m,"/quit") == 0) {
+      printf("leave the messagery");
+      exit(0);
+    }
+    else {
+      printf("Message send \n");
+    }
   }
   free(m);
 }
