@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
   pthread_join(receive, 0);
 
   // Shutdown of socket
-  shutdown(dS,2) ;
+  shutdown(dS,2);
   printf("End program\n");
 }
 
@@ -76,7 +76,7 @@ void receiveMessage(int socket){
 
 void sendMessage(int socket){
   char *m = (char*)malloc(MAX*sizeof(char));
-  while(strcmp(m,"/quit") != 0)
+  while(strcmp(m,"/quit\n") != 0)
   {
     // User input
     printf("Enter your message (100 max) : \n");
@@ -99,6 +99,7 @@ void sendMessage(int socket){
       exit(0);
     }
   }
+  shutdown(socket, 2);
   free(m);
   exit(0);
 }

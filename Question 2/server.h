@@ -7,7 +7,7 @@ typedef struct thread_sockets_receive tsr;
 struct thread_sockets_receive
 {
     int client;
-    int *clients;
+    List* clients;
 };
 
 typedef struct thread_sockets_send tss;

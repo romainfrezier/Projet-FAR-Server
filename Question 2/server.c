@@ -3,8 +3,8 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
-#include "server.h"
 #include "list.h"
+#include "server.h"
 #include <pthread.h>
 
 #define MAX_CONNECTION 3
@@ -124,31 +124,131 @@ void receiveMessage(void *sock_client)
     }
     printf("Message received : %s", msg);
 
-    if (strcmp(msg, "/quit") == 0)
+    if (strcmp(msg, "/quit\n") == 0)
     {
       delVal(sockets, (*sock_cli).client);
       shutdown((*sock_cli).client, 2);
-      
+      connection -= 1;
+      break;
     }
     else
     {
       // Send to each user
       pthread_t send;
       size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof((*sock_cli).clients[0]));
+      Link* current = sockets->head;
       for (int i = 0; i < connection; i++)
       {
-        if ((*sock_cli).clients[i] != (*sock_cli).client)
+        if (current->value != (*sock_cli).client)
         {
           tss *sendData = (tss *)malloc(sizeof(tss));
-          (*sendData).client = (*sock_cli).clients[i];
+          (*sendData).client = current->value;
           (*sendData).size = size;
           (*sendData).message = msg;
 
           // Execution of threads
           pthread_create(&send, NULL, transmitMessage, (void *)sendData);
         }
+        current = current->next;
       }
     }
   }
   free(msg);
+}
+
+List *createList()
+{
+    List *list = (List *)malloc(sizeof(List));
+    list->head = NULL;
+    return list;
+}
+
+int listIsEmpty(List *list)
+{
+    if (list->head == NULL)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+void addFirst(List *list, int value)
+{
+    Link *link = (Link *)malloc(sizeof(Link));
+    link->value = value;
+    if (list->head == NULL)
+    {
+        list->head = link;
+        link->next = NULL;
+    }
+    else
+    {
+        link->next = list->head;
+        list->head = link;
+    }
+}
+
+Link *next(Link *link)
+{
+    if (link->next == NULL)
+    {
+        return NULL;
+    }
+    else
+    {
+        return link->next;
+    }
+}
+
+void delFirst(List *list)
+{
+    if (list->head != NULL)
+    {
+        Link *deleted = list->head;
+        list->head = list->head->next;
+        free(deleted);
+    }
+}
+
+void delVal(List *list, int val)
+{
+    if (listIsEmpty(list) == 1)
+    {
+        if (list->head->value == val)
+        {
+            delFirst(list);
+        }
+        else
+        {
+            delValAux(list->head, val);
+        }
+    }
+    else
+    {
+        printf("list of sockets is empty !");
+    }
+}
+
+void delValAux(Link *link, int val)
+{
+    if (link->next != NULL)
+    {
+        if (link->next->value == val)
+        {
+            Link *deleted = link->next;
+            link->next = link->next->next;
+            free(deleted);
+        }
+        else
+        {
+            delValAux(link->next, val);
+        }
+    }
+    else
+    {
+        printf("Value not found !");
+    }
 }

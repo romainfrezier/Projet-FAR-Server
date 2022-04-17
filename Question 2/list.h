@@ -23,3 +23,5 @@ void delFirst(List* list);
 
 void delVal(List* list, int val);
 
+void delValAux(Link* link, int val);
+
