@@ -1,14 +1,36 @@
 #include <stdio.h>
-#include <stdio.h>
-#include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 #include "user.h"
 
 #define MAX 100
+
+int dS;
+
+void quit(int n){
+    char* m = "/quit\n";
+    u_long taille = strlen(m)+1;
+    printf("Message size : %lu\n", taille);
+    
+    // Send message size
+    if(send(dS, &taille, sizeof(u_long), 0) == -1)
+    {
+      perror("Error sending size\n");
+      exit(0);
+    }
+    
+    // Send message
+    if(send(dS, m, taille, 0) == -1)
+    {
+      perror("Error sending message\n");
+      exit(0);
+    }
+    exit(0);
+}
 
 // We want a thread that manages the shipment and another who manages the receipt
 int main(int argc, char *argv[]) {
@@ -24,7 +46,7 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Start program\n");
-  int dS = socket(PF_INET, SOCK_STREAM, 0);
+  dS = socket(PF_INET, SOCK_STREAM, 0);
   printf("Socket created\n");
 
   struct sockaddr_in aS;
@@ -34,6 +56,7 @@ int main(int argc, char *argv[]) {
   socklen_t lgA = sizeof(struct sockaddr_in) ;
   connect(dS, (struct sockaddr *) &aS, lgA) ;
   printf("Socket connected\n");
+  signal(SIGINT, quit);
   
   // Execution of threads
   pthread_t send;
@@ -56,11 +79,16 @@ void receiveMessage(int socket){
   {
     // Size reception
     u_long size;
-    if(recv(socket, &size, sizeof(u_long), 0) == -1)
+    int recve = recv(socket, &size, sizeof(u_long), 0);
+    if(recve == -1)
     {
       perror("Error message size received\n");
       exit(0);
     } 
+    else if (recve == 0){
+      printf("Server shutdown now ! \n");
+      exit(0);
+    }
 
     // Message reception
     char* res = (char*)malloc(size*sizeof(char));
