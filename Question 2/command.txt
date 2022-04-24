@@ -1,0 +1,7 @@
+List of commands
+
+/quit : allows you to exit the chat server
+
+/mp Recipient Message: sends the message to the recipient in private discussion
+
+/man: Displays the command manual

@@ -11,8 +11,25 @@
 
 int dS;
 
+// commands :
+//  - quit
+//  - private message
+//  - see the commands manual
+//  - text in italics, bold ... (see later)
+
+void displayManuel(){
+    FILE *manual;
+    char c;
+    manual = fopen("command.txt","rt");
+    while((c=fgetc(manual))!=EOF){
+        printf("%c",c);
+    }
+    fclose(manual);
+    printf("\n");
+}
+
 void quit(int n){
-    char* m = "/quit\n";
+    char* m = "/quit";
     u_long taille = strlen(m)+1;
     printf("Message size : %lu\n", taille);
     
@@ -79,14 +96,14 @@ void receiveMessage(int socket){
   {
     // Size reception
     u_long size;
-    int recve = recv(socket, &size, sizeof(u_long), 0);
-    if(recve == -1)
+    int receive = recv(socket, &size, sizeof(u_long), 0);
+    if (receive == -1)
     {
       perror("Error message size received\n");
       exit(0);
     } 
-    else if (recve == 0){
-      printf("Server shutdown now ! \n");
+    else if (receive == 0){
+      printf("Server shutdown now !\n");
       exit(0);
     }
 
@@ -104,28 +121,35 @@ void receiveMessage(int socket){
 
 void sendMessage(int socket){
   char *m = (char*)malloc(MAX*sizeof(char));
-  while(strcmp(m,"/quit\n") != 0)
+  while(strcmp(m,"/quit") != 0)
   {
     // User input
     printf("Enter your message (100 max) : \n");
     fgets(m, 100, stdin);
+    m[strcspn(m, "\n")] = 0;
     printf("My message : %s \n", m);
     u_long taille = strlen(m)+1;
     printf("Message size : %lu\n", taille);
-    
-    // Send message size
-    if(send(socket, &taille, sizeof(u_long), 0) == -1)
-    {
-      perror("Error sending size\n");
-      exit(0);
+
+    if (strcmp(m,"/man") == 0){
+      displayManuel();
     }
-    
-    // Send message
-    if(send(socket, m, taille, 0) == -1)
-    {
-      perror("Error sending message\n");
-      exit(0);
+    else {
+      // Send message size
+      if(send(socket, &taille, sizeof(u_long), 0) == -1)
+      {
+        perror("Error sending size\n");
+        exit(0);
+      }
+      
+      // Send message
+      if(send(socket, m, taille, 0) == -1)
+      {
+        perror("Error sending message\n");
+        exit(0);
+      }
     }
+
   }
   shutdown(socket, 2);
   free(m);

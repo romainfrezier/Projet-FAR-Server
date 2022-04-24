@@ -1,3 +1,4 @@
+#include "stringFunc.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -7,26 +8,12 @@
 #include <pthread.h>
 #include "list.h"
 #include "server.h"
+// #include "command.h"
 
 #define MAX_CONNECTION 3
 
 int connection = 0;
 List *sockets;
-
-void quit(int n){
-  // Shutdown of all user sockets
-  Link *current = sockets->head;
-  printf(" value du current : %d\n", current->value);
-  while (current != NULL){
-    Link *next = current->next;
-    shutdown(current->value,2);
-    printf("User %d has been stopped\n", current->value);
-    delVal(sockets, current->value);
-    current = next;
-  }
-  printf("The server has been stopped !\n");
-  exit(0);
-}
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
@@ -59,11 +46,11 @@ int main(int argc, char *argv[])
   printf("Socket named\n");
 
   listen(dS, MAX_CONNECTION);
-  printf("Listening mode\n");
+  printf("Listening mode on port %d \n", atoi(argv[1]));
 
   struct sockaddr_in aC;
   socklen_t lg = sizeof(struct sockaddr_in);
-  signal(SIGINT, quit);
+  signal(SIGINT, serverQuit);
   while (1)
   {
     // Users are accepted until max allow
@@ -140,21 +127,32 @@ void receiveMessage(void *sock_client)
       perror("Error message received\n");
       exit(0);
     }
-    printf("Message received : %s", msg);
+    printf("Message received : %s\n", msg);
 
-    if (strcmp(msg, "/quit\n") == 0)
+    // Commands management here
+    if (msg[0] == '/')
     {
-      delVal(sockets, (*sock_cli).client);
-      shutdown((*sock_cli).client, 2);
-      connection -= 1;
-      break;
+      printf("Command detected\n");
+      char* copyMessage = (char*)malloc(strlen(msg)+1);
+      strcpy(copyMessage,msg);
+      char *strto = strtok(copyMessage, " ");
+      if (strcmp(msg, "/quit") == 0)
+      {
+        userQuit((*sock_cli).client);
+        break;
+      }
+      else if (strcmp(strto, "/mp") == 0)
+      {
+        printf("go to private message\n");
+        sendPrivateMessage(msg);
+      }
     }
     else
     {
       // Send to each user
       pthread_t send;
       size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof((*sock_cli).clients[0]));
-      Link* current = sockets->head;
+      Link *current = sockets->head;
       for (int i = 0; i < connection; i++)
       {
         if (current->value != (*sock_cli).client)
@@ -172,4 +170,56 @@ void receiveMessage(void *sock_client)
     }
   }
   free(msg);
+}
+
+// Allows the server to stop
+void serverQuit(int n)
+{
+  // Shutdown of all user sockets
+  Link *current = sockets->head;
+  printf(" value du current : %d\n", current->value);
+  while (current != NULL)
+  {
+    Link *next = current->next;
+    shutdown(current->value, 2);
+    printf("User %d has been stopped\n", current->value);
+    delVal(sockets, current->value);
+    current = next;
+  }
+  printf("The server has been stopped !\n");
+  exit(0);
+}
+
+// Allows a user to leave the server
+void userQuit(int socket)
+{
+  delVal(sockets, socket);
+  shutdown(socket, 2);
+  connection -= 1;
+}
+
+// Allows sending a private message
+void sendPrivateMessage(char *msg)
+{
+  printf("je suis dans le private\n");
+  printf("définitions finies\n");
+  char** mess = str_split(msg);
+  char* cmd = (char*)malloc(strlen(mess[0]));
+  cmd = mess[0];
+  int target = atoi(mess[1]);
+  printf("définitions finies\n");
+  // 6 = /mp" "id" "
+  // mp 123 salut ça va
+  // je pense qu'il ne compte pas les espaces
+  int commandSize = sizeof(cmd);
+  int idSize = sizeof(target);
+  printf("id : %d\n", target);
+  printf("Command : %s\n", cmd);
+  printf("message privé : %s\n", mess[2]);
+  tss* sendData = (tss*)malloc(sizeof(tss));
+  (*sendData).client = target;
+  (*sendData).size = strlen(mess[2]);
+  (*sendData).message = mess[2];
+  pthread_t send;
+  pthread_create(&send, NULL, transmitMessage, (void *)sendData);
 }
