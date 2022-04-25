@@ -6,22 +6,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "list.h"
 #include "server.h"
 // #include "command.h"
 
-#define MAX_CONNECTION 3
-
-int connection = 0;
+unsigned int MAX_CONNECTION = 3;
 List *sockets;
+sem_t sem;
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
 {
 
   // Definition of the socket array to the desired size
-  sockets = createList();
-
+  sockets = createList(MAX_CONNECTION);
+  int pshared = 0; 
+  sem_init(&sem, pshared, MAX_CONNECTION);
   if (argc != 2)
   {
     printf("Usage : ./exe port");
@@ -54,22 +55,26 @@ int main(int argc, char *argv[])
   while (1)
   {
     // Users are accepted until max allow
-    while (connection < MAX_CONNECTION)
+    // Wait for space in the user list
+    sem_wait(&sem);
+    int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
+    
+    // Send connection message
+    if(send(acceptation, "Connected !\nPlease choose your username : ", 44, 0) == -1)
     {
-      int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
-      addFirst(sockets, acceptation);
-      printf("User %d connected with id : %d\n", connection + 1, acceptation);
-
-      // and we attributed a reception thread to each
-      tsr *receiveData = (tsr *)malloc(sizeof(tsr));
-      (*receiveData).client = acceptation;
-      (*receiveData).clients = sockets;
-      pthread_t receive;
-      pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
-      connection += 1;
-
-      // Maybe free here
+      perror("Error sending connection message\n");
+      exit(0);
     }
+
+    // and we attributed a reception thread to each
+    tsr *receiveData = (tsr *)malloc(sizeof(tsr));
+    (*receiveData).client = acceptation;
+    (*receiveData).clients = sockets;
+    pthread_t receive;
+    pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
+
+    // Maybe free here
+    
   }
   // Shutdown of all user sockets
   Link *current = sockets->head;
@@ -82,6 +87,7 @@ int main(int argc, char *argv[])
 
   // Server shutdown
   shutdown(dS, 2);
+  sem_destroy(sem);
   printf("End program\n");
 }
 
@@ -110,6 +116,24 @@ void receiveMessage(void *sock_client)
   tsr *sock_cli = (tsr *)sock_client;
   char *msg;
   u_long size;
+  char* pseudo;
+  if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
+  {
+    perror("Error message size received\n");
+    exit(0);
+  }
+  printf("Size received : %lu\n", size);
+  pseudo = (char*)malloc(sizeof(char)*size);
+  if (recv((*sock_cli).client, pseudo, size, 0) == -1)
+  {
+    perror("Error message received\n");
+    exit(0);
+  }
+  printf("Pseudo received : %s\n", pseudo);
+  //add the client to the socket list
+  addFirst(sockets, sock_cli->client, pseudo);
+  printf("User connected with id : %d\n", sock_cli->client);
+
   while (1)
   {
     // Size reception
@@ -153,7 +177,7 @@ void receiveMessage(void *sock_client)
       pthread_t send;
       size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof((*sock_cli).clients[0]));
       Link *current = sockets->head;
-      for (int i = 0; i < connection; i++)
+      for (int i = 0; i < sockets->size; i++)
       {
         if (current->value != (*sock_cli).client)
         {
@@ -195,27 +219,18 @@ void userQuit(int socket)
 {
   delVal(sockets, socket);
   shutdown(socket, 2);
-  connection -= 1;
+  sem_post(&sem);
 }
 
 // Allows sending a private message
 void sendPrivateMessage(char *msg)
 {
-  printf("je suis dans le private\n");
-  printf("définitions finies\n");
   char** mess = str_split(msg);
   char* cmd = (char*)malloc(strlen(mess[0]));
   cmd = mess[0];
   int target = atoi(mess[1]);
-  printf("définitions finies\n");
-  // 6 = /mp" "id" "
-  // mp 123 salut ça va
-  // je pense qu'il ne compte pas les espaces
   int commandSize = sizeof(cmd);
   int idSize = sizeof(target);
-  printf("id : %d\n", target);
-  printf("Command : %s\n", cmd);
-  printf("message privé : %s\n", mess[2]);
   tss* sendData = (tss*)malloc(sizeof(tss));
   (*sendData).client = target;
   (*sendData).size = strlen(mess[2]);

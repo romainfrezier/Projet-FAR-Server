@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include "list.h"
 
-List *createList()
+List *createList(int size)
 {
     List *list = (List *)malloc(sizeof(List));
+    list->size = size;
     list->head = NULL;
     return list;
 }
@@ -21,19 +22,26 @@ int listIsEmpty(List *list)
     }
 }
 
-void addFirst(List *list, int value)
+void addFirst(List *list, int value, char* pseudo)
 {
-    Link *link = (Link *)malloc(sizeof(Link));
-    link->value = value;
-    if (list->head == NULL)
-    {
-        list->head = link;
-        link->next = NULL;
+    if (list->size == 0){
+        printf("There is no more space in the server !\n");
     }
-    else
-    {
-        link->next = list->head;
-        list->head = link;
+    else {
+        Link *link = (Link *)malloc(sizeof(Link));
+        link->value = value;
+        link->pseudo = pseudo;
+        if (list->head == NULL)
+        {
+            list->head = link;
+            link->next = NULL;
+        }
+        else
+        {
+            link->next = list->head;
+            list->head = link;
+        }
+        list->size = list->size - 1;
     }
 }
 
@@ -56,6 +64,7 @@ void delFirst(List *list)
         Link *deleted = list->head;
         list->head = list->head->next;
         free(deleted);
+        list->size = list->size + 1;
     }
 }
 
@@ -71,6 +80,7 @@ void delVal(List *list, int val)
         {
             delValAux(list->head, val);
         }
+        list->size = list->size + 1;
     }
     else
     {

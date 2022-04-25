@@ -2,6 +2,7 @@ typedef struct Link Link;
 
 struct Link {
     int value;
+    char* pseudo;
     Link* next;
 };
 
@@ -9,13 +10,14 @@ typedef struct List List;
 
 struct List{
     Link* head;
+    int size;
 };
 
-List* createList();
+List* createList(int size);
 
 int listeIsEmpty(List* list);
 
-void addFirst(List* list, int value);
+void addFirst(List* list, int value, char* pseudo);
 
 Link* next(Link* link);
 

@@ -30,18 +30,18 @@ void displayManuel(){
 
 void quit(int n){
     char* m = "/quit";
-    u_long taille = strlen(m)+1;
-    printf("Message size : %lu\n", taille);
+    u_long size = strlen(m)+1;
+    printf("Message size : %lu\n", size);
     
     // Send message size
-    if(send(dS, &taille, sizeof(u_long), 0) == -1)
+    if(send(dS, &size, sizeof(u_long), 0) == -1)
     {
       perror("Error sending size\n");
       exit(0);
     }
     
     // Send message
-    if(send(dS, m, taille, 0) == -1)
+    if(send(dS, m, size, 0) == -1)
     {
       perror("Error sending message\n");
       exit(0);
@@ -65,14 +65,39 @@ int main(int argc, char *argv[]) {
   printf("Start program\n");
   dS = socket(PF_INET, SOCK_STREAM, 0);
   printf("Socket created\n");
-
   struct sockaddr_in aS;
   aS.sin_family = AF_INET;
-  inet_pton(AF_INET,argv[1],&(aS.sin_addr)) ;
-  aS.sin_port = htons(atoi(argv[2])) ;
-  socklen_t lgA = sizeof(struct sockaddr_in) ;
-  connect(dS, (struct sockaddr *) &aS, lgA) ;
-  printf("Socket connected\n");
+  inet_pton(AF_INET,argv[1],&(aS.sin_addr));
+  aS.sin_port = htons(atoi(argv[2]));
+  socklen_t lgA = sizeof(struct sockaddr_in);
+  connect(dS, (struct sockaddr *) &aS, lgA);
+  char* isConnected = (char*)malloc(44*sizeof(char)); // "Connected !\nPlease choose your username : "
+  if(recv(dS, isConnected, 44*sizeof(char), 0) == -1)
+  {
+    perror("An error appeared during connection to the server...\n");
+    exit(0);
+  } 
+  printf("%s\n", isConnected);
+  char* username = (char*)malloc(sizeof(char)*50);
+  fgets(username, 50, stdin);
+  username[strcspn(username, "\n")] = 0;
+  printf("My username : %s \n", username);
+  u_long size = strlen(username)+1;
+  printf("Message size : %lu\n", size);
+
+  // Send username size
+  if(send(dS, &size, sizeof(u_long), 0) == -1)
+  {
+    perror("Error sending username size\n");
+    exit(0);
+  }
+  
+  // Send username
+  if(send(dS, username, size, 0) == -1)
+  {
+    perror("Error sending username\n");
+    exit(0);
+  }
   signal(SIGINT, quit);
   
   // Execution of threads
@@ -128,22 +153,22 @@ void sendMessage(int socket){
     fgets(m, 100, stdin);
     m[strcspn(m, "\n")] = 0;
     printf("My message : %s \n", m);
-    u_long taille = strlen(m)+1;
-    printf("Message size : %lu\n", taille);
+    u_long size = strlen(m)+1;
+    printf("Message size : %lu\n", size);
 
     if (strcmp(m,"/man") == 0){
       displayManuel();
     }
     else {
       // Send message size
-      if(send(socket, &taille, sizeof(u_long), 0) == -1)
+      if(send(socket, &size, sizeof(u_long), 0) == -1)
       {
         perror("Error sending size\n");
         exit(0);
       }
       
       // Send message
-      if(send(socket, m, taille, 0) == -1)
+      if(send(socket, m, size, 0) == -1)
       {
         perror("Error sending message\n");
         exit(0);
