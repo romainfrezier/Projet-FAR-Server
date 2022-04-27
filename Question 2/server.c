@@ -7,14 +7,66 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#else
 #include <semaphore.h>
+#endif
+
 #include "list.h"
 #include "server.h"
 // #include "command.h"
 
-unsigned int MAX_CONNECTION = 3;
+unsigned int MAX_CONNECTION = 2;
 List *sockets;
-sem_t sem;
+
+struct rk_sema {
+  #ifdef __APPLE__
+      dispatch_semaphore_t    sem;
+  #else
+      sem_t                   sem;
+  #endif
+};
+
+static inline void rk_sema_init(struct rk_sema *s, uint32_t value) {
+  #ifdef __APPLE__
+      dispatch_semaphore_t *sem = &s->sem;
+
+      *sem = dispatch_semaphore_create(value);
+  #else
+      sem_init(&s->sem, 0, value);
+  #endif
+}
+
+static inline void rk_sema_wait(struct rk_sema *s) {
+  #ifdef __APPLE__
+      dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
+  #else
+      int r;
+      do {
+        r = sem_wait(&s->sem);
+      } while (r == -1 && errno == EINTR);
+  #endif
+}
+
+static inline void rk_sema_post(struct rk_sema *s) {
+  #ifdef __APPLE__
+      dispatch_semaphore_signal(s->sem);
+  #else
+      sem_post(&s->sem);
+  #endif
+}
+
+static inline void rk_sema_destroy(struct rk_sema *s) {
+  #ifdef __APPLE__
+      dispatch_release(s->sem);
+  #else
+      sem_destroy(&s->sem);
+  #endif
+}
+
+struct rk_sema sem;
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
@@ -22,8 +74,9 @@ int main(int argc, char *argv[])
 
   // Definition of the socket array to the desired size
   sockets = createList(MAX_CONNECTION);
-  int pshared = 0; 
-  sem_init(&sem, pshared, MAX_CONNECTION);
+
+  rk_sema_init(&sem, MAX_CONNECTION);
+
   if (argc != 2)
   {
     printf("Usage : ./exe port");
@@ -57,7 +110,7 @@ int main(int argc, char *argv[])
   {
     // Users are accepted until max allow
     // Wait for space in the user list
-    sem_wait(&sem);
+    rk_sema_wait(&sem);
     int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
     
     // Send connection message
@@ -88,7 +141,7 @@ int main(int argc, char *argv[])
 
   // Server shutdown
   shutdown(dS, 2);
-  sem_destroy(&sem);
+  rk_sema_destroy(&sem);
   printf("End program\n");
 }
 
@@ -176,10 +229,13 @@ void receiveMessage(void *sock_client)
     {
       // Send to each user
       pthread_t send;
-      size_t array_size = (sizeof((*sock_cli).clients)) / (sizeof((*sock_cli).clients[0]));
       Link *current = sockets->head;
-      for (int i = 0; i < sockets->size; i++)
+      for (int i = 0; i < MAX_CONNECTION - sockets->size; i++)
       {
+        printf("i = %d\n", i);
+        printf("(*sock_cli).client = %d\n", (*sock_cli).client);
+        printf("current->value = %d\n", current->value);
+        printf("sockets->size = %d\n", sockets->size);
         if (current->value != (*sock_cli).client)
         {
           tss *sendData = (tss *)malloc(sizeof(tss));
@@ -220,7 +276,7 @@ void userQuit(int socket)
 {
   delVal(sockets, socket);
   shutdown(socket, 2);
-  sem_post(&sem);
+  rk_sema_post(&sem);
 }
 
 // Allows sending a private message
