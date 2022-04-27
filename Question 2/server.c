@@ -68,6 +68,28 @@ static inline void rk_sema_destroy(struct rk_sema *s) {
 
 struct rk_sema sem;
 
+// Functions to print in color
+// Green for transmitting message
+void green () {
+  printf("\033[0;32m");
+}
+// Blue for receiving message
+void blue () {
+  printf("\033[0;34m");
+}
+// Purple for receiving private message
+void purple () {
+  printf("\033[0;35m");
+}
+// Red for errors
+void red () {
+  printf("\033[0;31m");
+}
+// Reset color to white
+void reset () {
+  printf("\033[0m");
+}
+
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
 {
@@ -79,13 +101,17 @@ int main(int argc, char *argv[])
 
   if (argc != 2)
   {
+    red();
     printf("Usage : ./exe port");
+    reset();
     exit(0);
   }
 
   if (atoi(argv[1]) <= 1024)
   {
+    red();
     perror("Bad port: must be greater than 1024");
+    reset();
   }
 
   printf("Start program\n");
@@ -116,7 +142,9 @@ int main(int argc, char *argv[])
     // Send connection message
     if(send(acceptation, "Connected !\nPlease choose your username : ", 44, 0) == -1)
     {
+      red();
       perror("Error sending connection message\n");
+      reset();
       exit(0);
     }
 
@@ -152,17 +180,23 @@ void transmitMessage(void *sock_client)
   // Transmit message size
   if (send((*sock_cli).client, &((*sock_cli).size), sizeof(u_long), 0) == -1)
   {
+    red();
     printf("Error sending size for socket : %d\n", (*sock_cli).client);
+    reset();
     exit(0);
   }
 
   // Transmit message size
   if (send((*sock_cli).client, (*sock_cli).message, (*sock_cli).size, 0) == -1)
   {
+    red();
     perror("Error sending message\n");
+    reset();
     exit(0);
   }
+  green();
   printf("Message transmitted\n");
+  reset();
 }
 
 void receiveMessage(void *sock_client)
@@ -173,17 +207,25 @@ void receiveMessage(void *sock_client)
   char* pseudo;
   if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
   {
+    red();
     perror("Error message size received\n");
+    reset();
     exit(0);
   }
+  blue();
   printf("Size received : %lu\n", size);
+  reset();
   pseudo = (char*)malloc(sizeof(char)*size);
   if (recv((*sock_cli).client, pseudo, size, 0) == -1)
   {
+    red();
     perror("Error message received\n");
+    reset();
     exit(0);
   }
+  blue();
   printf("Pseudo received : %s\n", pseudo);
+  reset();
   //add the client to the socket list
   addFirst(sockets, sock_cli->client, pseudo);
   printf("User connected with id : %d\n", sock_cli->client);
@@ -193,19 +235,27 @@ void receiveMessage(void *sock_client)
     // Size reception
     if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
     {
+      red();
       perror("Error message size received\n");
+      reset();
       exit(0);
     }
+    blue();
     printf("Size received : %lu\n", size);
+    reset();
 
     // Message reception
     char *msg = (char *)malloc(size);
     if (recv((*sock_cli).client, msg, size, 0) == -1)
     {
+      red();
       perror("Error message received\n");
+      reset();
       exit(0);
     }
+    blue();
     printf("Message received : %s\n", msg);
+    reset();
 
     // Commands management here
     if (msg[0] == '/')

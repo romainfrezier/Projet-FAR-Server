@@ -49,6 +49,28 @@ void quit(int n){
     exit(0);
 }
 
+// Functions to print in color
+// Green for sending message
+void green () {
+  printf("\033[0;32m");
+}
+// Blue for receiving message
+void blue () {
+  printf("\033[0;34m");
+}
+// Purple for receiving private message
+void purple () {
+  printf("\033[0;35m");
+}
+// Red for errors
+void red () {
+  printf("\033[0;31m");
+}
+// Reset color to white
+void reset () {
+  printf("\033[0m");
+}
+
 // We want a thread that manages the shipment and another who manages the receipt
 int main(int argc, char *argv[]) {
 
@@ -74,7 +96,9 @@ int main(int argc, char *argv[]) {
   char* isConnected = (char*)malloc(44*sizeof(char)); // "Connected !\nPlease choose your username : "
   if(recv(dS, isConnected, 44*sizeof(char), 0) == -1)
   {
+    red();
     perror("An error appeared during connection to the server...\n");
+    reset();
     exit(0);
   } 
   printf("%s\n", isConnected);
@@ -83,19 +107,22 @@ int main(int argc, char *argv[]) {
   username[strcspn(username, "\n")] = 0;
   printf("My username : %s \n", username);
   u_long size = strlen(username)+1;
-  printf("Message size : %lu\n", size);
 
   // Send username size
   if(send(dS, &size, sizeof(u_long), 0) == -1)
   {
+    red();
     perror("Error sending username size\n");
+    reset();
     exit(0);
   }
   
   // Send username
   if(send(dS, username, size, 0) == -1)
   {
+    red();
     perror("Error sending username\n");
+    reset();
     exit(0);
   }
   signal(SIGINT, quit);
@@ -124,11 +151,15 @@ void receiveMessage(int socket){
     int receive = recv(socket, &size, sizeof(u_long), 0);
     if (receive == -1)
     {
+      red();
       perror("Error message size received\n");
+      reset();
       exit(0);
     } 
     else if (receive == 0){
+      red();
       printf("Server shutdown now !\n");
+      reset();
       exit(0);
     }
 
@@ -136,10 +167,14 @@ void receiveMessage(int socket){
     char* res = (char*)malloc(size*sizeof(char));
     if(recv(socket, res, size*sizeof(char), 0) == -1)
     {
+      red();
       perror("Error message received\n");
+      reset();
       exit(0);
     } 
+    blue();
     printf("Message received : %s\n", res);
+    reset();
   }
   free(m);
 }
@@ -152,9 +187,10 @@ void sendMessage(int socket){
     printf("Enter your message (100 max) : \n");
     fgets(m, 100, stdin);
     m[strcspn(m, "\n")] = 0;
+    green();
     printf("My message : %s \n", m);
+    reset();
     u_long size = strlen(m)+1;
-    printf("Message size : %lu\n", size);
 
     if (strcmp(m,"/man") == 0){
       displayManuel();
@@ -163,14 +199,18 @@ void sendMessage(int socket){
       // Send message size
       if(send(socket, &size, sizeof(u_long), 0) == -1)
       {
+        red();
         perror("Error sending size\n");
+        reset();
         exit(0);
       }
       
       // Send message
       if(send(socket, m, size, 0) == -1)
       {
+        red();
         perror("Error sending message\n");
+        reset();
         exit(0);
       }
     }
