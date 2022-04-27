@@ -1,5 +1,6 @@
 #include "stringFunc.h"
 #include <stdio.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -87,7 +88,7 @@ int main(int argc, char *argv[])
 
   // Server shutdown
   shutdown(dS, 2);
-  sem_destroy(sem);
+  sem_destroy(&sem);
   printf("End program\n");
 }
 
