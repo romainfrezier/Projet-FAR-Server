@@ -18,7 +18,7 @@
 #include "server.h"
 // #include "command.h"
 
-unsigned int MAX_CONNECTION = 2;
+unsigned int MAX_CONNECTION = 3;
 List *sockets;
 
 struct rk_sema {
@@ -67,6 +67,8 @@ static inline void rk_sema_destroy(struct rk_sema *s) {
 }
 
 struct rk_sema sem;
+struct rk_sema semList;
+
 
 // Functions to print in color
 // Green for transmitting message
@@ -98,7 +100,7 @@ int main(int argc, char *argv[])
   sockets = createList(MAX_CONNECTION);
 
   rk_sema_init(&sem, MAX_CONNECTION);
-
+  rk_sema_init(&semList,1);
   if (argc != 2)
   {
     red();
@@ -138,9 +140,20 @@ int main(int argc, char *argv[])
     // Wait for space in the user list
     rk_sema_wait(&sem);
     int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
-    
+
+    char* coMsg = "Please choose your username : ";
+    u_long sizeCoMsg;
+    sizeCoMsg = strlen(coMsg) + 1;
+    // Send connection message size
+    if (send(acceptation, &sizeCoMsg, sizeof(u_long), 0) == -1)
+    {
+      red();
+      printf("Error sending size for socket : %d\n", acceptation);
+      reset();
+      exit(0);
+    }
     // Send connection message
-    if(send(acceptation, "Connected !\nPlease choose your username : ", 44, 0) == -1)
+    if(send(acceptation, coMsg, sizeCoMsg, 0) == -1)
     {
       red();
       perror("Error sending connection message\n");
@@ -169,6 +182,7 @@ int main(int argc, char *argv[])
 
   // Server shutdown
   shutdown(dS, 2);
+  rk_sema_destroy(&semList);
   rk_sema_destroy(&sem);
   printf("End program\n");
 }
@@ -205,29 +219,81 @@ void receiveMessage(void *sock_client)
   char *msg;
   u_long size;
   char* pseudo;
-  if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
+  int check;
+  do{
+    if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
+    {
+      red();
+      perror("Error message size received\n");
+      reset();
+      exit(0);
+    }
+    blue();
+    printf("Size received : %lu\n", size);
+    reset();
+    pseudo = (char*)malloc(sizeof(char)*size);
+    if (recv((*sock_cli).client, pseudo, size, 0) == -1)
+    {
+      red();
+      perror("Error message received\n");
+      reset();
+      exit(0);
+    }
+    blue();
+    printf("Pseudo received : %s\n", pseudo);
+    reset();
+    check = pseudoInList(sockets, pseudo);
+    printf("check : %d\n",check);
+    if (check == 0){
+      char* coMsg = "Username already used !\nPlease choose another username : ";
+      u_long sizeCoMsg;
+      sizeCoMsg = strlen(coMsg) + 1;
+      // Send connection message size
+      if (send((*sock_cli).client, &sizeCoMsg, sizeof(u_long), 0) == -1)
+      {
+        red();
+        printf("Error sending size for socket : %d\n", (*sock_cli).client);
+        reset();
+        exit(0);
+      }
+      // Send connection message
+      if(send((*sock_cli).client, coMsg, sizeCoMsg, 0) == -1)
+      {
+        red();
+        perror("Error sending connection message\n");
+        reset();
+        exit(0);
+      }
+    }
+  }while(check == 0);
+
+  char* connectionValidate = "Connected !";
+  u_long sizeCoMsg;
+  sizeCoMsg = strlen(connectionValidate) + 1;
+  // Send connection message size
+  if (send((*sock_cli).client, &sizeCoMsg, sizeof(u_long), 0) == -1)
   {
     red();
-    perror("Error message size received\n");
+    printf("Error sending size for socket : %d\n", (*sock_cli).client);
     reset();
     exit(0);
   }
-  blue();
-  printf("Size received : %lu\n", size);
-  reset();
-  pseudo = (char*)malloc(sizeof(char)*size);
-  if (recv((*sock_cli).client, pseudo, size, 0) == -1)
+  // Send connection message
+  if(send((*sock_cli).client, connectionValidate, sizeCoMsg, 0) == -1)
   {
     red();
-    perror("Error message received\n");
+    perror("Error sending connection message\n");
     reset();
     exit(0);
   }
+
   blue();
   printf("Pseudo received : %s\n", pseudo);
   reset();
   //add the client to the socket list
+  rk_sema_wait(&semList);
   addFirst(sockets, sock_cli->client, pseudo);
+  rk_sema_post(&semList);
   printf("User connected with id : %d\n", sock_cli->client);
 
   while (1)
@@ -266,6 +332,7 @@ void receiveMessage(void *sock_client)
       char *strto = strtok(copyMessage, " ");
       if (strcmp(msg, "/quit") == 0)
       {
+        printf("ici 1 : %d\n",(*sock_cli).client);
         userQuit((*sock_cli).client);
         break;
       }
@@ -280,6 +347,7 @@ void receiveMessage(void *sock_client)
       // Send to each user
       pthread_t send;
       Link *current = sockets->head;
+      displayList(sockets);
       for (int i = 0; i < MAX_CONNECTION - sockets->size; i++)
       {
         printf("i = %d\n", i);
@@ -314,7 +382,9 @@ void serverQuit(int n)
     Link *next = current->next;
     shutdown(current->value, 2);
     printf("User %d has been stopped\n", current->value);
+    rk_sema_wait(&semList);
     delVal(sockets, current->value);
+    rk_sema_post(&semList);
     current = next;
   }
   printf("The server has been stopped !\n");
@@ -324,7 +394,9 @@ void serverQuit(int n)
 // Allows a user to leave the server
 void userQuit(int socket)
 {
+  rk_sema_wait(&semList);
   delVal(sockets, socket);
+  rk_sema_post(&semList);
   shutdown(socket, 2);
   rk_sema_post(&sem);
 }

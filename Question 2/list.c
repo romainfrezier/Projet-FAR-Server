@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "list.h"
+
+// Boolean : 0 = true ; 1 = false
 
 List *createList(int size)
 {
@@ -62,9 +65,9 @@ void delFirst(List *list)
     if (list->head != NULL)
     {
         Link *deleted = list->head;
+        printf("id supp : %d\n", deleted->value);
         list->head = list->head->next;
         free(deleted);
-        list->size = list->size + 1;
     }
 }
 
@@ -94,6 +97,7 @@ void delValAux(Link *link, int val)
     {
         if (link->next->value == val)
         {
+            printf("id supprimer : %d\n", val);
             Link *deleted = link->next;
             link->next = link->next->next;
             free(deleted);
@@ -106,5 +110,38 @@ void delValAux(Link *link, int val)
     else
     {
         printf("Value not found !");
+    }
+}
+
+int pseudoInList(List* list, char* pseudo){
+    if(listIsEmpty(list) == 1){
+        Link* current = list->head;
+        printf("pseudo current bfr: %s\n", current->pseudo);
+        printf("pseudo : %s\n", pseudo);
+        while (current != NULL && (strcmp(current->pseudo,pseudo) != 0)){
+            printf("pseudo current : %s\n", current->pseudo);
+            current = current->next;
+        }
+        if (current != NULL && (strcmp(current->pseudo,pseudo) == 0)){
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    } else {
+        return 1;
+    }
+}
+
+void displayList(List* list){
+    if (listIsEmpty(list) == 1){
+        Link* current = list->head;
+        while (current != NULL){
+            printf("value : %d\n", current->value);
+            current = current->next;
+        }
+    }
+    else {
+        printf("The list is empty\n");
     }
 }

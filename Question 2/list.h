@@ -27,3 +27,6 @@ void delVal(List* list, int val);
 
 void delValAux(Link* link, int val);
 
+void displayList(List* list);
+
+int pseudoInList(List* list, char* pseudo);

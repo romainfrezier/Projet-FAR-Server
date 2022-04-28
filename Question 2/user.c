@@ -93,38 +93,65 @@ int main(int argc, char *argv[]) {
   aS.sin_port = htons(atoi(argv[2]));
   socklen_t lgA = sizeof(struct sockaddr_in);
   connect(dS, (struct sockaddr *) &aS, lgA);
-  char* isConnected = (char*)malloc(44*sizeof(char)); // "Connected !\nPlease choose your username : "
-  if(recv(dS, isConnected, 44*sizeof(char), 0) == -1)
-  {
-    red();
-    perror("An error appeared during connection to the server...\n");
-    reset();
-    exit(0);
-  } 
-  printf("%s\n", isConnected);
-  char* username = (char*)malloc(sizeof(char)*50);
-  fgets(username, 50, stdin);
-  username[strcspn(username, "\n")] = 0;
-  printf("My username : %s \n", username);
-  u_long size = strlen(username)+1;
 
-  // Send username size
-  if(send(dS, &size, sizeof(u_long), 0) == -1)
-  {
-    red();
-    perror("Error sending username size\n");
-    reset();
-    exit(0);
-  }
-  
-  // Send username
-  if(send(dS, username, size, 0) == -1)
-  {
-    red();
-    perror("Error sending username\n");
-    reset();
-    exit(0);
-  }
+  int check;
+  do{
+    // Connection message size reception
+    u_long sizeCoMsg;
+    int receive = recv(dS, &sizeCoMsg, sizeof(u_long), 0);
+    if (receive == -1)
+    {
+      red();
+      perror("Error message size received\n");
+      reset();
+      exit(0);
+    } 
+    else if (receive == 0){
+      red();
+      printf("Server shutdown now !\n");
+      reset();
+      exit(0);
+    }
+    // Message reception
+    char* isConnected = (char*)malloc(sizeCoMsg*sizeof(char));
+    if(recv(dS, isConnected, sizeCoMsg*sizeof(char), 0) == -1)
+    {
+      red();
+      perror("An error appeared during connection to the server...\n");
+      reset();
+      exit(0);
+    }  
+    printf("%s\n", isConnected);
+
+    check = strcmp(isConnected, "Connected !");
+
+    if(check != 0){
+      char* username = (char*)malloc(sizeof(char)*50);
+      fgets(username, 50, stdin);
+      username[strcspn(username, "\n")] = 0;
+      printf("My username : %s \n", username);
+      u_long size = strlen(username)+1;
+
+      // Send username size
+      if(send(dS, &size, sizeof(u_long), 0) == -1)
+      {
+        red();
+        perror("Error sending username size\n");
+        reset();
+        exit(0);
+      }
+      
+      // Send username
+      if(send(dS, username, size, 0) == -1)
+      {
+        red();
+        perror("Error sending username\n");
+        reset();
+        exit(0);
+      }
+    }
+  }while(check != 0);
+
   signal(SIGINT, quit);
   
   // Execution of threads
