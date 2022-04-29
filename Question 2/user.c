@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "user.h"
+#include "colors.h"
 
 #define MAX 100
 
@@ -49,28 +50,6 @@ void quit(int n){
     exit(0);
 }
 
-// Functions to print in color
-// Green for sending message
-void green () {
-  printf("\033[0;32m");
-}
-// Blue for receiving message
-void blue () {
-  printf("\033[0;34m");
-}
-// Purple for receiving private message
-void purple () {
-  printf("\033[0;35m");
-}
-// Red for errors
-void red () {
-  printf("\033[0;31m");
-}
-// Reset color to white
-void reset () {
-  printf("\033[0m");
-}
-
 // We want a thread that manages the shipment and another who manages the receipt
 int main(int argc, char *argv[]) {
 
@@ -93,6 +72,8 @@ int main(int argc, char *argv[]) {
   aS.sin_port = htons(atoi(argv[2]));
   socklen_t lgA = sizeof(struct sockaddr_in);
   connect(dS, (struct sockaddr *) &aS, lgA);
+
+  signal(SIGINT, quit);
 
   int check;
   do{
@@ -151,8 +132,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }while(check != 0);
-
-  signal(SIGINT, quit);
   
   // Execution of threads
   pthread_t send;
@@ -174,8 +153,8 @@ void receiveMessage(int socket){
   while (1)
   {
     // Size reception
-    u_long size;
-    int receive = recv(socket, &size, sizeof(u_long), 0);
+    u_long sizeMessage;
+    int receive = recv(socket, &sizeMessage, sizeof(u_long), 0);
     if (receive == -1)
     {
       red();
@@ -191,8 +170,8 @@ void receiveMessage(int socket){
     }
 
     // Message reception
-    char* res = (char*)malloc(size*sizeof(char));
-    if(recv(socket, res, size*sizeof(char), 0) == -1)
+    char* messageReceive = (char*)malloc(sizeMessage*sizeof(char));
+    if(recv(socket, messageReceive, sizeMessage*sizeof(char), 0) == -1)
     {
       red();
       perror("Error message received\n");
@@ -200,7 +179,7 @@ void receiveMessage(int socket){
       exit(0);
     } 
     blue();
-    printf("Message received : %s\n", res);
+    printf("%s\n", messageReceive);
     reset();
   }
   free(m);

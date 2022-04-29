@@ -25,12 +25,14 @@ int listIsEmpty(List *list)
     }
 }
 
-void addFirst(List *list, int value, char* pseudo)
+void addFirst(List *list, int value, char *pseudo)
 {
-    if (list->size == 0){
+    if (list->size == 0)
+    {
         printf("There is no more space in the server !\n");
     }
-    else {
+    else
+    {
         Link *link = (Link *)malloc(sizeof(Link));
         link->value = value;
         link->pseudo = pseudo;
@@ -113,35 +115,91 @@ void delValAux(Link *link, int val)
     }
 }
 
-int pseudoInList(List* list, char* pseudo){
-    if(listIsEmpty(list) == 1){
-        Link* current = list->head;
-        printf("pseudo current bfr: %s\n", current->pseudo);
-        printf("pseudo : %s\n", pseudo);
-        while (current != NULL && (strcmp(current->pseudo,pseudo) != 0)){
-            printf("pseudo current : %s\n", current->pseudo);
+int pseudoInList(List *list, char *pseudo)
+{
+    if (listIsEmpty(list) == 1)
+    {
+        Link *current = list->head;
+        while (current != NULL && (strcmp(current->pseudo, pseudo) != 0))
+        {
             current = current->next;
         }
-        if (current != NULL && (strcmp(current->pseudo,pseudo) == 0)){
+        if (current != NULL && (strcmp(current->pseudo, pseudo) == 0))
+        {
             return 0;
         }
-        else {
+        else
+        {
             return 1;
         }
-    } else {
+    }
+    else
+    {
         return 1;
     }
 }
 
-void displayList(List* list){
-    if (listIsEmpty(list) == 1){
-        Link* current = list->head;
-        while (current != NULL){
+int getIdByPseudo(List *list, char *pseudo)
+{
+    if (listIsEmpty(list) == 1)
+    {
+        Link *current = list->head;
+        while (current != NULL && (strcmp(current->pseudo, pseudo) != 0))
+        {
+            current = current->next;
+        }
+        if (current != NULL && (strcmp(current->pseudo, pseudo) == 0))
+        {
+            return current->value;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+char *getPseudoById(List *list, int id)
+{
+    if (listIsEmpty(list) == 1)
+    {
+        Link *current = list->head;
+        while (current != NULL && id != current->value)
+        {
+            current = current->next;
+        }
+        if (current != NULL && current->value == id)
+        {
+            return current->pseudo;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+void displayList(List *list)
+{
+    if (listIsEmpty(list) == 1)
+    {
+        Link *current = list->head;
+        while (current != NULL)
+        {
             printf("value : %d\n", current->value);
             current = current->next;
         }
     }
-    else {
+    else
+    {
         printf("The list is empty\n");
     }
 }

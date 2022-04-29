@@ -16,7 +16,7 @@
 
 #include "list.h"
 #include "server.h"
-// #include "command.h"
+#include "colors.h"
 
 unsigned int MAX_CONNECTION = 3;
 List *sockets;
@@ -67,30 +67,7 @@ static inline void rk_sema_destroy(struct rk_sema *s) {
 }
 
 struct rk_sema sem;
-struct rk_sema semList;
-
-
-// Functions to print in color
-// Green for transmitting message
-void green () {
-  printf("\033[0;32m");
-}
-// Blue for receiving message
-void blue () {
-  printf("\033[0;34m");
-}
-// Purple for receiving private message
-void purple () {
-  printf("\033[0;35m");
-}
-// Red for errors
-void red () {
-  printf("\033[0;31m");
-}
-// Reset color to white
-void reset () {
-  printf("\033[0m");
-}
+pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
@@ -98,22 +75,15 @@ int main(int argc, char *argv[])
 
   // Definition of the socket array to the desired size
   sockets = createList(MAX_CONNECTION);
-
   rk_sema_init(&sem, MAX_CONNECTION);
-  rk_sema_init(&semList,1);
   if (argc != 2)
   {
-    red();
-    printf("Usage : ./exe port");
-    reset();
-    exit(0);
+    executeError("Usage : ./exe port");
   }
 
   if (atoi(argv[1]) <= 1024)
   {
-    red();
-    perror("Bad port: must be greater than 1024");
-    reset();
+    executeError("Bad port: must be greater than 1024");
   }
 
   printf("Start program\n");
@@ -140,26 +110,7 @@ int main(int argc, char *argv[])
     // Wait for space in the user list
     rk_sema_wait(&sem);
     int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
-
-    char* coMsg = "Please choose your username : ";
-    u_long sizeCoMsg;
-    sizeCoMsg = strlen(coMsg) + 1;
-    // Send connection message size
-    if (send(acceptation, &sizeCoMsg, sizeof(u_long), 0) == -1)
-    {
-      red();
-      printf("Error sending size for socket : %d\n", acceptation);
-      reset();
-      exit(0);
-    }
-    // Send connection message
-    if(send(acceptation, coMsg, sizeCoMsg, 0) == -1)
-    {
-      red();
-      perror("Error sending connection message\n");
-      reset();
-      exit(0);
-    }
+    sendSpecificMessage(acceptation, "Please choose your username : ");
 
     // and we attributed a reception thread to each
     tsr *receiveData = (tsr *)malloc(sizeof(tsr));
@@ -182,7 +133,6 @@ int main(int argc, char *argv[])
 
   // Server shutdown
   shutdown(dS, 2);
-  rk_sema_destroy(&semList);
   rk_sema_destroy(&sem);
   printf("End program\n");
 }
@@ -190,24 +140,19 @@ int main(int argc, char *argv[])
 void transmitMessage(void *sock_client)
 {
   tss *sock_cli = (tss *)sock_client;
+  u_long pseudoSize = strlen((*sock_cli).pseudoSender) + 1;
+  struct rk_sema semSend;
+  rk_sema_init(&semSend, 1);
+
+  // strcat
+  u_long globalSize = pseudoSize + (*sock_cli).size + 1;
+  char *messageTransmited = (char *)malloc(globalSize * sizeof(char));
+  strcat(messageTransmited, (*sock_cli).pseudoSender);
+  strcat(messageTransmited, " : ");
+  strcat(messageTransmited, (*sock_cli).message);
 
   // Transmit message size
-  if (send((*sock_cli).client, &((*sock_cli).size), sizeof(u_long), 0) == -1)
-  {
-    red();
-    printf("Error sending size for socket : %d\n", (*sock_cli).client);
-    reset();
-    exit(0);
-  }
-
-  // Transmit message size
-  if (send((*sock_cli).client, (*sock_cli).message, (*sock_cli).size, 0) == -1)
-  {
-    red();
-    perror("Error sending message\n");
-    reset();
-    exit(0);
-  }
+  sendSpecificMessage((*sock_cli).client, messageTransmited);
   green();
   printf("Message transmitted\n");
   reset();
@@ -245,55 +190,18 @@ void receiveMessage(void *sock_client)
     check = pseudoInList(sockets, pseudo);
     printf("check : %d\n",check);
     if (check == 0){
-      char* coMsg = "Username already used !\nPlease choose another username : ";
-      u_long sizeCoMsg;
-      sizeCoMsg = strlen(coMsg) + 1;
-      // Send connection message size
-      if (send((*sock_cli).client, &sizeCoMsg, sizeof(u_long), 0) == -1)
-      {
-        red();
-        printf("Error sending size for socket : %d\n", (*sock_cli).client);
-        reset();
-        exit(0);
-      }
-      // Send connection message
-      if(send((*sock_cli).client, coMsg, sizeCoMsg, 0) == -1)
-      {
-        red();
-        perror("Error sending connection message\n");
-        reset();
-        exit(0);
-      }
+      sendSpecificMessage((*sock_cli).client, "Username already used !\nPlease choose another username : ");
     }
   }while(check == 0);
 
-  char* connectionValidate = "Connected !";
-  u_long sizeCoMsg;
-  sizeCoMsg = strlen(connectionValidate) + 1;
-  // Send connection message size
-  if (send((*sock_cli).client, &sizeCoMsg, sizeof(u_long), 0) == -1)
-  {
-    red();
-    printf("Error sending size for socket : %d\n", (*sock_cli).client);
-    reset();
-    exit(0);
-  }
-  // Send connection message
-  if(send((*sock_cli).client, connectionValidate, sizeCoMsg, 0) == -1)
-  {
-    red();
-    perror("Error sending connection message\n");
-    reset();
-    exit(0);
-  }
-
+  sendSpecificMessage((*sock_cli).client, "Connected !");
   blue();
   printf("Pseudo received : %s\n", pseudo);
   reset();
   //add the client to the socket list
-  rk_sema_wait(&semList);
+  pthread_mutex_lock(&mutexList);
   addFirst(sockets, sock_cli->client, pseudo);
-  rk_sema_post(&semList);
+  pthread_mutex_unlock(&mutexList);
   printf("User connected with id : %d\n", sock_cli->client);
 
   while (1)
@@ -332,14 +240,13 @@ void receiveMessage(void *sock_client)
       char *strto = strtok(copyMessage, " ");
       if (strcmp(msg, "/quit") == 0)
       {
-        printf("ici 1 : %d\n",(*sock_cli).client);
         userQuit((*sock_cli).client);
         break;
       }
       else if (strcmp(strto, "/mp") == 0)
       {
-        printf("go to private message\n");
-        sendPrivateMessage(msg);
+        printf("Go to private message\n");
+        sendPrivateMessage(msg,(*sock_cli).client);
       }
     }
     else
@@ -350,17 +257,13 @@ void receiveMessage(void *sock_client)
       displayList(sockets);
       for (int i = 0; i < MAX_CONNECTION - sockets->size; i++)
       {
-        printf("i = %d\n", i);
-        printf("(*sock_cli).client = %d\n", (*sock_cli).client);
-        printf("current->value = %d\n", current->value);
-        printf("sockets->size = %d\n", sockets->size);
         if (current->value != (*sock_cli).client)
         {
           tss *sendData = (tss *)malloc(sizeof(tss));
           (*sendData).client = current->value;
           (*sendData).size = size;
           (*sendData).message = msg;
-
+          (*sendData).pseudoSender = getPseudoById(sockets, (*sock_cli).client);
           // Execution of threads
           pthread_create(&send, NULL, transmitMessage, (void *)sendData);
         }
@@ -382,9 +285,9 @@ void serverQuit(int n)
     Link *next = current->next;
     shutdown(current->value, 2);
     printf("User %d has been stopped\n", current->value);
-    rk_sema_wait(&semList);
+    pthread_mutex_lock(&mutexList);
     delVal(sockets, current->value);
-    rk_sema_post(&semList);
+    pthread_mutex_unlock(&mutexList);
     current = next;
   }
   printf("The server has been stopped !\n");
@@ -394,26 +297,56 @@ void serverQuit(int n)
 // Allows a user to leave the server
 void userQuit(int socket)
 {
-  rk_sema_wait(&semList);
+  pthread_mutex_lock(&mutexList);
   delVal(sockets, socket);
-  rk_sema_post(&semList);
+  pthread_mutex_unlock(&mutexList);
   shutdown(socket, 2);
   rk_sema_post(&sem);
 }
 
 // Allows sending a private message
-void sendPrivateMessage(char *msg)
+void sendPrivateMessage(char *msg, int client)
 {
   char** mess = str_split(msg);
   char* cmd = (char*)malloc(strlen(mess[0]));
   cmd = mess[0];
-  int target = atoi(mess[1]);
-  int commandSize = sizeof(cmd);
-  int idSize = sizeof(target);
-  tss* sendData = (tss*)malloc(sizeof(tss));
-  (*sendData).client = target;
-  (*sendData).size = strlen(mess[2]);
-  (*sendData).message = mess[2];
-  pthread_t send;
-  pthread_create(&send, NULL, transmitMessage, (void *)sendData);
+  char* target = mess[1];
+  int id = getIdByPseudo(sockets, target);
+  if (id != NULL){
+    char* pseudo = getPseudoById(sockets, client);
+    int commandSize = sizeof(cmd);
+    int idSize = sizeof(target);
+    tss* sendData = (tss*)malloc(sizeof(tss));
+    (*sendData).client = id;
+    (*sendData).size = strlen(mess[2]) + 1;
+    (*sendData).message = mess[2];
+    (*sendData).pseudoSender = pseudo;
+    pthread_t send;
+    pthread_create(&send, NULL, transmitMessage, (void *)sendData);
+  }
+  else {
+    sendSpecificMessage(client, "This user doesn't exist !");
+    printf("The user doesn't exist ! \n");
+  }
+}
+
+void sendSpecificMessage(int client, char* message){
+    u_long sizeMessage = strlen(message) + 1;
+    // Send connection message size
+    if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
+    {
+      executeError("Error sending size\n");
+    }
+    // Send connection message
+    if (send(client, message, sizeMessage, 0) == -1)
+    {
+      executeError("Error sending connection message\n");
+    }
+}
+
+void executeError(char* errorMessage){
+  red();
+  perror(errorMessage);
+  reset();
+  exit(0);
 }

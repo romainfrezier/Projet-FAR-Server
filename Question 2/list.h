@@ -30,3 +30,7 @@ void delValAux(Link* link, int val);
 void displayList(List* list);
 
 int pseudoInList(List* list, char* pseudo);
+
+int getIdByPseudo(List* list, char* pseudo);
+
+char* getPseudoById(List* list, int id);
