@@ -28,12 +28,12 @@ int main(int argc, char *argv[])
   rk_sema_init(&sem, MAX_CONNECTION);
   if (argc != 2)
   {
-    executeError("Usage : ./exe port");
+    redErrorMessage("Usage : ./exe port");
   }
 
   if (atoi(argv[1]) <= 1024)
   {
-    executeError("Bad port: must be greater than 1024");
+    redErrorMessage("Bad port: must be greater than 1024");
   }
 
   printf("Start program\n");
@@ -116,13 +116,13 @@ void receiveMessage(void *sock_client)
   do{
     if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
     {
-      executeError("Error message size received\n");
+      redErrorMessage("Error message size received\n");
     }
     blueMessage("Size received\n");
     pseudo = (char*)malloc(sizeof(char)*size);
     if (recv((*sock_cli).client, pseudo, size, 0) == -1)
     {
-      executeError("Error message received\n");
+      redErrorMessage("Error message received\n");
     }
     blueMessage("Pseudo received : ");
     blueMessage(pseudo);
@@ -148,7 +148,7 @@ void receiveMessage(void *sock_client)
     // Size reception
     if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
     {
-      executeError("Error message size received\n");
+      redErrorMessage("Error message size received\n");
     }
     blueMessage("Size received\n");
 
@@ -156,7 +156,7 @@ void receiveMessage(void *sock_client)
     char *msg = (char *)malloc(size);
     if (recv((*sock_cli).client, msg, size, 0) == -1)
     {
-      executeError("Error message received\n");
+      redErrorMessage("Error message received\n");
     }
     blueMessage("Message received\n");
 
@@ -259,15 +259,11 @@ void sendSpecificMessage(int client, char* message){
     // Send connection message size
     if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
     {
-      executeError("Error sending size\n");
+      redErrorMessage("Error sending size\n");
     }
     // Send connection message
     if (send(client, message, sizeMessage, 0) == -1)
     {
-      executeError("Error sending connection message\n");
+      redErrorMessage("Error sending connection message\n");
     }
-}
-
-void executeError(char* errorMessage){
-  redErrorMessage(errorMessage);
 }

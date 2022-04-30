@@ -144,6 +144,7 @@ void receiveMessage(int socket){
     }
     blueMessage(messageReceive);
     printf("\n");
+    printf("Enter your message (100 max) : \n");
   }
   free(m);
 }
@@ -179,11 +180,11 @@ void sendSpecificMessage(int client, char *message)
   // Send connection message size
   if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
   {
-    executeError("Error sending size\n");
+    redErrorMessage("Error sending size\n");
   }
   // Send connection message
   if (send(client, message, sizeMessage, 0) == -1)
   {
-    executeError("Error sending connection message\n");
+    redErrorMessage("Error sending connection message\n");
   }
 }
