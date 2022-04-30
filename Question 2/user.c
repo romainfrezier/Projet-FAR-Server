@@ -16,6 +16,7 @@ int dS;
 //  - quit
 //  - private message
 //  - see the commands manual
+//  - see all users connected (see later)
 //  - text in italics, bold ... (see later)
 
 void displayManuel(){
@@ -29,10 +30,9 @@ void displayManuel(){
     printf("\n");
 }
 
-void quit(int n){
+void quitForUser(int n){
     char* m = "/quit";
     u_long size = strlen(m)+1;
-    printf("Message size : %lu\n", size);
     
     // Send message size
     if(send(dS, &size, sizeof(u_long), 0) == -1)
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
   socklen_t lgA = sizeof(struct sockaddr_in);
   connect(dS, (struct sockaddr *) &aS, lgA);
 
-  signal(SIGINT, quit);
+  signal(SIGINT, quitForUser);
 
   int check;
   do{
@@ -82,25 +82,16 @@ int main(int argc, char *argv[]) {
     int receive = recv(dS, &sizeCoMsg, sizeof(u_long), 0);
     if (receive == -1)
     {
-      red();
-      perror("Error message size received\n");
-      reset();
-      exit(0);
+      redErrorMessage("Error message size received\n");
     } 
     else if (receive == 0){
-      red();
-      printf("Server shutdown now !\n");
-      reset();
-      exit(0);
+      redErrorMessage("Server shutdown now !\n");
     }
     // Message reception
     char* isConnected = (char*)malloc(sizeCoMsg*sizeof(char));
     if(recv(dS, isConnected, sizeCoMsg*sizeof(char), 0) == -1)
     {
-      red();
-      perror("An error appeared during connection to the server...\n");
-      reset();
-      exit(0);
+      redErrorMessage("An error appeared during connection to the server...\n");
     }  
     printf("%s\n", isConnected);
 
@@ -111,25 +102,7 @@ int main(int argc, char *argv[]) {
       fgets(username, 50, stdin);
       username[strcspn(username, "\n")] = 0;
       printf("My username : %s \n", username);
-      u_long size = strlen(username)+1;
-
-      // Send username size
-      if(send(dS, &size, sizeof(u_long), 0) == -1)
-      {
-        red();
-        perror("Error sending username size\n");
-        reset();
-        exit(0);
-      }
-      
-      // Send username
-      if(send(dS, username, size, 0) == -1)
-      {
-        red();
-        perror("Error sending username\n");
-        reset();
-        exit(0);
-      }
+      sendSpecificMessage(dS, username);
     }
   }while(check != 0);
   
@@ -157,30 +130,20 @@ void receiveMessage(int socket){
     int receive = recv(socket, &sizeMessage, sizeof(u_long), 0);
     if (receive == -1)
     {
-      red();
-      perror("Error message size received\n");
-      reset();
-      exit(0);
+      redErrorMessage("Error message size received\n");
     } 
     else if (receive == 0){
-      red();
-      printf("Server shutdown now !\n");
-      reset();
-      exit(0);
+      redErrorMessage("Server shutdown now !\n");
     }
 
     // Message reception
     char* messageReceive = (char*)malloc(sizeMessage*sizeof(char));
     if(recv(socket, messageReceive, sizeMessage*sizeof(char), 0) == -1)
     {
-      red();
-      perror("Error message received\n");
-      reset();
-      exit(0);
-    } 
-    blue();
-    printf("%s\n", messageReceive);
-    reset();
+      redErrorMessage("Error message received\n");
+    }
+    blueMessage(messageReceive);
+    printf("\n");
   }
   free(m);
 }
@@ -193,38 +156,34 @@ void sendMessage(int socket){
     printf("Enter your message (100 max) : \n");
     fgets(m, 100, stdin);
     m[strcspn(m, "\n")] = 0;
-    green();
-    printf("My message : %s \n", m);
-    reset();
+    greenMessage("My message : ");
+    greenMessage(m);
+    printf("\n");
     u_long size = strlen(m)+1;
 
     if (strcmp(m,"/man") == 0){
       displayManuel();
     }
     else {
-      // Send message size
-      if(send(socket, &size, sizeof(u_long), 0) == -1)
-      {
-        red();
-        perror("Error sending size\n");
-        reset();
-        exit(0);
-      }
-      
-      // Send message
-      if(send(socket, m, size, 0) == -1)
-      {
-        red();
-        perror("Error sending message\n");
-        reset();
-        exit(0);
-      }
+      sendSpecificMessage(socket, m);
     }
-
   }
   shutdown(socket, 2);
   free(m);
   exit(0);
 }
 
-
+void sendSpecificMessage(int client, char *message)
+{
+  u_long sizeMessage = strlen(message) + 1;
+  // Send connection message size
+  if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
+  {
+    executeError("Error sending size\n");
+  }
+  // Send connection message
+  if (send(client, message, sizeMessage, 0) == -1)
+  {
+    executeError("Error sending connection message\n");
+  }
+}

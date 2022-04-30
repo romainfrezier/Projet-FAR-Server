@@ -67,7 +67,6 @@ void delFirst(List *list)
     if (list->head != NULL)
     {
         Link *deleted = list->head;
-        printf("id supp : %d\n", deleted->value);
         list->head = list->head->next;
         free(deleted);
     }
@@ -99,7 +98,6 @@ void delValAux(Link *link, int val)
     {
         if (link->next->value == val)
         {
-            printf("id supprimer : %d\n", val);
             Link *deleted = link->next;
             link->next = link->next->next;
             free(deleted);
@@ -193,8 +191,8 @@ void displayList(List *list)
     {
         Link *current = list->head;
         while (current != NULL)
-        {
-            printf("value : %d\n", current->value);
+        {    
+            printf("Pseudo : %s (id : %d)\n", current->pseudo, current->value);
             current = current->next;
         }
     }

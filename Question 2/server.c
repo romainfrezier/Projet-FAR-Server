@@ -1,4 +1,3 @@
-#include "stringFunc.h"
 #include <stdio.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -8,63 +7,14 @@
 #include <string.h>
 #include <pthread.h>
 
-#ifdef __APPLE__
-#include <dispatch/dispatch.h>
-#else
-#include <semaphore.h>
-#endif
-
+#include "stringFunc.h"
 #include "list.h"
 #include "server.h"
 #include "colors.h"
+#include "sema.h"
 
 unsigned int MAX_CONNECTION = 3;
 List *sockets;
-
-struct rk_sema {
-  #ifdef __APPLE__
-      dispatch_semaphore_t    sem;
-  #else
-      sem_t                   sem;
-  #endif
-};
-
-static inline void rk_sema_init(struct rk_sema *s, uint32_t value) {
-  #ifdef __APPLE__
-      dispatch_semaphore_t *sem = &s->sem;
-
-      *sem = dispatch_semaphore_create(value);
-  #else
-      sem_init(&s->sem, 0, value);
-  #endif
-}
-
-static inline void rk_sema_wait(struct rk_sema *s) {
-  #ifdef __APPLE__
-      dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
-  #else
-      int r;
-      do {
-        r = sem_wait(&s->sem);
-      } while (r == -1 && errno == EINTR);
-  #endif
-}
-
-static inline void rk_sema_post(struct rk_sema *s) {
-  #ifdef __APPLE__
-      dispatch_semaphore_signal(s->sem);
-  #else
-      sem_post(&s->sem);
-  #endif
-}
-
-static inline void rk_sema_destroy(struct rk_sema *s) {
-  #ifdef __APPLE__
-      dispatch_release(s->sem);
-  #else
-      sem_destroy(&s->sem);
-  #endif
-}
 
 struct rk_sema sem;
 pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
@@ -153,9 +103,7 @@ void transmitMessage(void *sock_client)
 
   // Transmit message size
   sendSpecificMessage((*sock_cli).client, messageTransmited);
-  green();
-  printf("Message transmitted\n");
-  reset();
+  greenMessage("Message transmitted\n");
 }
 
 void receiveMessage(void *sock_client)
@@ -168,37 +116,28 @@ void receiveMessage(void *sock_client)
   do{
     if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
     {
-      red();
-      perror("Error message size received\n");
-      reset();
-      exit(0);
+      executeError("Error message size received\n");
     }
-    blue();
-    printf("Size received : %lu\n", size);
-    reset();
+    blueMessage("Size received\n");
     pseudo = (char*)malloc(sizeof(char)*size);
     if (recv((*sock_cli).client, pseudo, size, 0) == -1)
     {
-      red();
-      perror("Error message received\n");
-      reset();
-      exit(0);
+      executeError("Error message received\n");
     }
-    blue();
-    printf("Pseudo received : %s\n", pseudo);
-    reset();
+    blueMessage("Pseudo received : ");
+    blueMessage(pseudo);
+    printf("\n");
     check = pseudoInList(sockets, pseudo);
-    printf("check : %d\n",check);
     if (check == 0){
       sendSpecificMessage((*sock_cli).client, "Username already used !\nPlease choose another username : ");
     }
   }while(check == 0);
 
   sendSpecificMessage((*sock_cli).client, "Connected !");
-  blue();
-  printf("Pseudo received : %s\n", pseudo);
-  reset();
-  //add the client to the socket list
+  blueMessage("Pseudo accepted : ");
+  blueMessage(pseudo);
+  printf("\n");
+  // add the client to the socket list
   pthread_mutex_lock(&mutexList);
   addFirst(sockets, sock_cli->client, pseudo);
   pthread_mutex_unlock(&mutexList);
@@ -209,27 +148,17 @@ void receiveMessage(void *sock_client)
     // Size reception
     if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
     {
-      red();
-      perror("Error message size received\n");
-      reset();
-      exit(0);
+      executeError("Error message size received\n");
     }
-    blue();
-    printf("Size received : %lu\n", size);
-    reset();
+    blueMessage("Size received\n");
 
     // Message reception
     char *msg = (char *)malloc(size);
     if (recv((*sock_cli).client, msg, size, 0) == -1)
     {
-      red();
-      perror("Error message received\n");
-      reset();
-      exit(0);
+      executeError("Error message received\n");
     }
-    blue();
-    printf("Message received : %s\n", msg);
-    reset();
+    blueMessage("Message received\n");
 
     // Commands management here
     if (msg[0] == '/')
@@ -279,19 +208,13 @@ void serverQuit(int n)
 {
   // Shutdown of all user sockets
   Link *current = sockets->head;
-  printf(" value du current : %d\n", current->value);
   while (current != NULL)
   {
     Link *next = current->next;
-    shutdown(current->value, 2);
-    printf("User %d has been stopped\n", current->value);
-    pthread_mutex_lock(&mutexList);
-    delVal(sockets, current->value);
-    pthread_mutex_unlock(&mutexList);
+    userQuit(current->value);
     current = next;
   }
-  printf("The server has been stopped !\n");
-  exit(0);
+  redErrorMessage("\nThe server has been stopped !\n");
 }
 
 // Allows a user to leave the server
@@ -302,6 +225,7 @@ void userQuit(int socket)
   pthread_mutex_unlock(&mutexList);
   shutdown(socket, 2);
   rk_sema_post(&sem);
+  printf("User %d has been stopped\n", socket);
 }
 
 // Allows sending a private message
@@ -345,8 +269,5 @@ void sendSpecificMessage(int client, char* message){
 }
 
 void executeError(char* errorMessage){
-  red();
-  perror(errorMessage);
-  reset();
-  exit(0);
+  redErrorMessage(errorMessage);
 }

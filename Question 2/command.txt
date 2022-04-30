@@ -2,6 +2,6 @@ List of commands
 
 /quit : allows you to exit the chat server
 
-/mp Recipient Message: sends the message to the recipient in private discussion
+/mp pseudo Message: sends the message to the user with pseudo "pseudo" in private discussion
 
 /man: Displays the command manual
