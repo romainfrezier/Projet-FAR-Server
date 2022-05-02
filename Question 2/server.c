@@ -238,13 +238,16 @@ void sendPrivateMessage(char *msg, int client)
   int id = getIdByPseudo(sockets, target);
   if (id != NULL){
     char* pseudo = getPseudoById(sockets, client);
+    char *mpPseudo = (char *)malloc(sizeof(char)*(strlen(pseudo)+strlen("(mp) ")));
+    strcat(mpPseudo,"(mp) ");
+    strcat(mpPseudo, pseudo);
     int commandSize = sizeof(cmd);
     int idSize = sizeof(target);
     tss* sendData = (tss*)malloc(sizeof(tss));
     (*sendData).client = id;
     (*sendData).size = strlen(mess[2]) + 1;
     (*sendData).message = mess[2];
-    (*sendData).pseudoSender = pseudo;
+    (*sendData).pseudoSender = mpPseudo;
     pthread_t send;
     pthread_create(&send, NULL, transmitMessage, (void *)sendData);
   }

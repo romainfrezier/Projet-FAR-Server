@@ -5,12 +5,15 @@
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
+#include <regex.h>
+
 #include "user.h"
 #include "colors.h"
 
 #define MAX 100
 
 int dS;
+regex_t regex;
 
 // commands :
 //  - quit
@@ -18,37 +21,6 @@ int dS;
 //  - see the commands manual
 //  - see all users connected (see later)
 //  - text in italics, bold ... (see later)
-
-void displayManuel(){
-    FILE *manual;
-    char c;
-    manual = fopen("command.txt","rt");
-    while((c=fgetc(manual))!=EOF){
-        printf("%c",c);
-    }
-    fclose(manual);
-    printf("\n");
-}
-
-void quitForUser(int n){
-    char* m = "/quit";
-    u_long size = strlen(m)+1;
-    
-    // Send message size
-    if(send(dS, &size, sizeof(u_long), 0) == -1)
-    {
-      perror("Error sending size\n");
-      exit(0);
-    }
-    
-    // Send message
-    if(send(dS, m, size, 0) == -1)
-    {
-      perror("Error sending message\n");
-      exit(0);
-    }
-    exit(0);
-}
 
 // We want a thread that manages the shipment and another who manages the receipt
 int main(int argc, char *argv[]) {
@@ -142,7 +114,18 @@ void receiveMessage(int socket){
     {
       redErrorMessage("Error message received\n");
     }
-    blueMessage(messageReceive);
+
+    int resRegex;
+
+    resRegex = regcomp(&regex, "^(mp)[:print:]*", 0);
+    resRegex = regexec(&regex, messageReceive, 0, NULL, 0);
+    if (resRegex == 0)
+    {
+      purpleMessage(messageReceive);
+    }
+    else {
+      blueMessage(messageReceive);
+    }
     printf("\n");
     printf("Enter your message (100 max) : \n");
   }
@@ -187,4 +170,38 @@ void sendSpecificMessage(int client, char *message)
   {
     redErrorMessage("Error sending connection message\n");
   }
+}
+
+void displayManuel()
+{
+  FILE *manual;
+  char c;
+  manual = fopen("command.txt", "rt");
+  while ((c = fgetc(manual)) != EOF)
+  {
+    printf("%c", c);
+  }
+  fclose(manual);
+  printf("\n");
+}
+
+void quitForUser(int n)
+{
+  char *m = "/quit";
+  u_long size = strlen(m) + 1;
+
+  // Send message size
+  if (send(dS, &size, sizeof(u_long), 0) == -1)
+  {
+    perror("Error sending size\n");
+    exit(0);
+  }
+
+  // Send message
+  if (send(dS, m, size, 0) == -1)
+  {
+    perror("Error sending message\n");
+    exit(0);
+  }
+  exit(0);
 }
