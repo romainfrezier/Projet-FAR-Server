@@ -6,7 +6,7 @@
 
 #include "sema.h"
 
-void rk_sema_init(struct rk_sema *s, uint32_t value)
+void rk_sema_init(struct rk_sema *s, u_int32_t value)
 {
 #ifdef __APPLE__
     dispatch_semaphore_t *sem = &s->sem;

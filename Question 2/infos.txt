@@ -1,0 +1,10 @@
+supprimer les threads (pthread_cancel)
+on passe le thread receive dans la struct pour le stocker dans la liste aprè_s
+
+free msg dans le receive, à réfléchir ? (en comm)
+car l'espace est réallouer a chaque message...
+si on free dans le while, alors tout le user n'ont pas le temps d'avoir le message
+
+le kick est douteux mais il fonctionne
+j'envoi un message au client "/quit" pour qu'il se kick tout seul. 
+Je n'ai pas encore réussi via le server pour kick directement le client

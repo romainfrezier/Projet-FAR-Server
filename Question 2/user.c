@@ -115,6 +115,11 @@ void receiveMessage(int socket){
       redErrorMessage("Error message received\n");
     }
 
+    if (strcmp(messageReceive, "/quit") == 0){
+      printf("/quit server received \n");
+      quitForUser(0);
+    }
+
     int resRegex;
 
     resRegex = regcomp(&regex, "^(mp)[:print:]*", 0);

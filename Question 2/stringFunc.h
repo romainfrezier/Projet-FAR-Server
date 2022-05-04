@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-char** str_split(char* msg);
+char** str_split(char* msg, int n);
+
+int verifCommand(char* cmd, int nbSpace);
 
 #endif // STRING_FUNC_H_

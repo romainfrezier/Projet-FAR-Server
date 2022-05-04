@@ -18,6 +18,7 @@ List *sockets;
 
 struct rk_sema sem;
 pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
+char* adminKey = "1234";
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
@@ -177,6 +178,14 @@ void receiveMessage(void *sock_client)
         printf("Go to private message\n");
         sendPrivateMessage(msg,(*sock_cli).client);
       }
+      else if (strcmp(strto, "/admin") == 0){
+        printf("Go to admin verification\n");
+        adminVerification(msg, (*sock_cli).client);
+      }
+      else if (strcmp(strto, "/kick") == 0){
+        printf("Go to kick function\n");
+        kick(msg, (*sock_cli).client);
+      }
     }
     else
     {
@@ -199,8 +208,8 @@ void receiveMessage(void *sock_client)
         current = current->next;
       }
     }
+    //free(msg);
   }
-  free(msg);
 }
 
 // Allows the server to stop
@@ -215,6 +224,7 @@ void serverQuit(int n)
     current = next;
   }
   redErrorMessage("\nThe server has been stopped !\n");
+  exit(0);
 }
 
 // Allows a user to leave the server
@@ -231,29 +241,34 @@ void userQuit(int socket)
 // Allows sending a private message
 void sendPrivateMessage(char *msg, int client)
 {
-  char** mess = str_split(msg);
-  char* cmd = (char*)malloc(strlen(mess[0]));
-  cmd = mess[0];
-  char* target = mess[1];
-  int id = getIdByPseudo(sockets, target);
-  if (id != NULL){
-    char* pseudo = getPseudoById(sockets, client);
-    char *mpPseudo = (char *)malloc(sizeof(char)*(strlen(pseudo)+strlen("(mp) ")));
-    strcat(mpPseudo,"(mp) ");
-    strcat(mpPseudo, pseudo);
-    int commandSize = sizeof(cmd);
-    int idSize = sizeof(target);
-    tss* sendData = (tss*)malloc(sizeof(tss));
-    (*sendData).client = id;
-    (*sendData).size = strlen(mess[2]) + 1;
-    (*sendData).message = mess[2];
-    (*sendData).pseudoSender = mpPseudo;
-    pthread_t send;
-    pthread_create(&send, NULL, transmitMessage, (void *)sendData);
+  if (verifCommand(msg, 2) == 1){
+    char** mess = str_split(msg, 3);
+    char* cmd = (char*)malloc(strlen(mess[0]));
+    cmd = mess[0];
+    char* target = mess[1];
+    int id = getIdByPseudo(sockets, target);
+    if (id != NULL){
+      char* pseudo = getPseudoById(sockets, client);
+      char *mpPseudo = (char *)malloc(sizeof(char)*(strlen(pseudo)+strlen("(mp) ")));
+      strcat(mpPseudo,"(mp) ");
+      strcat(mpPseudo, pseudo);
+      int commandSize = sizeof(cmd);
+      int idSize = sizeof(target);
+      tss* sendData = (tss*)malloc(sizeof(tss));
+      (*sendData).client = id;
+      (*sendData).size = strlen(mess[2]) + 1;
+      (*sendData).message = mess[2];
+      (*sendData).pseudoSender = mpPseudo;
+      pthread_t send;
+      pthread_create(&send, NULL, transmitMessage, (void *)sendData);
+    }
+    else {
+      sendSpecificMessage(client, "This user doesn't exist !");
+      printf("The user doesn't exist ! \n");
+    }
   }
   else {
-    sendSpecificMessage(client, "This user doesn't exist !");
-    printf("The user doesn't exist ! \n");
+    sendSpecificMessage(client, "The command is : [/mp targetPseudo yourMessage] \n");
   }
 }
 
@@ -270,3 +285,46 @@ void sendSpecificMessage(int client, char* message){
       redErrorMessage("Error sending connection message\n");
     }
 }
+
+void adminVerification(char* message, int client){
+    if (verifCommand(message, 1) == 1){
+      char** mess = str_split(message, 2);
+      if (strcmp(adminKey, mess[1]) == 0){
+        char* pseudo = getPseudoById(sockets, client);
+        if (pseudo != NULL){
+          setUserAdmin(sockets, client);
+          sendSpecificMessage(client, "You are now an admin !\n");
+        }
+      }
+      else {
+        sendSpecificMessage(client, "That's not the current admin key !\n");
+      }
+    }
+    else {
+      sendSpecificMessage(client, "The command is : [/admin adminKey] \n");
+    }
+  }
+
+  void kick(char* message, int client){
+    if (verifCommand(message, 1) == 1){
+      if (isClientAdmin(sockets, client) == 1){
+        char** mess = str_split(message, 2);
+        int idKickedClient = getIdByPseudo(sockets, mess[1]);
+        if (idKickedClient != NULL){
+          sendSpecificMessage(idKickedClient, "You have been kicked by an admin !\n");
+          printf("User %d has been kicked by admin %d \n", idKickedClient, client);
+          sendSpecificMessage(idKickedClient, "/quit");
+          sendSpecificMessage(client, "The user has been kicked !\n");
+        }
+        else {
+          sendSpecificMessage(client, "The user doesn't exist !\n");
+        }
+      }
+      else {
+        sendSpecificMessage(client, "You don't have the permission !\n");
+      }
+    }
+    else {
+      sendSpecificMessage(client, "The command is : [/kick targetPseudo] \n");
+    }
+  }

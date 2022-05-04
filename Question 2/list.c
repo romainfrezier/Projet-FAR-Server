@@ -36,6 +36,7 @@ void addFirst(List *list, int value, char *pseudo)
         Link *link = (Link *)malloc(sizeof(Link));
         link->value = value;
         link->pseudo = pseudo;
+        link->admin = -1;
         if (list->head == NULL)
         {
             list->head = link;
@@ -199,5 +200,28 @@ void displayList(List *list)
     else
     {
         printf("The list is empty\n");
+    }
+}
+
+void setUserAdmin(List* list, int idUser){
+    Link* current = list->head;
+    while (current != NULL && current->value != idUser){
+        current = current->next;
+    }
+    if (current->value = idUser){
+        current->admin = 1;
+    }
+}
+
+int isClientAdmin(List* list, int idUser){
+    Link* current = list->head;
+    while (current != NULL && current->value != idUser){
+        current = current->next;
+    }
+    if (current->value = idUser){
+        return current->admin;
+    }
+    else {
+        return -1;
     }
 }

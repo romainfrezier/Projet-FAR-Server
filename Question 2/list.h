@@ -3,6 +3,7 @@ typedef struct Link Link;
 struct Link {
     int value;
     char* pseudo;
+    int admin;
     Link* next;
 };
 
@@ -34,3 +35,7 @@ int pseudoInList(List* list, char* pseudo);
 int getIdByPseudo(List* list, char* pseudo);
 
 char* getPseudoById(List* list, int id);
+
+void setUserAdmin(List* list, int idUser);
+
+int isClientAdmin(List* list, int idUser);

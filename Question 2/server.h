@@ -29,4 +29,8 @@ void sendPrivateMessage(char *msg, int client); // Allows sending a private mess
 void sendSpecificMessage(int client, char *message); // Send a specific message to user selected
 void executeError(char *errorMessage); // Display an error
 
+void adminVerification(char* message, int client);
+
+void kick(char* message, int client);
+
 #endif // SERVER_H_
