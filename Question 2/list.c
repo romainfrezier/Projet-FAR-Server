@@ -208,7 +208,7 @@ void setUserAdmin(List* list, int idUser){
     while (current != NULL && current->value != idUser){
         current = current->next;
     }
-    if (current->value = idUser){
+    if (current->value == idUser){
         current->admin = 1;
     }
 }
@@ -218,7 +218,7 @@ int isClientAdmin(List* list, int idUser){
     while (current != NULL && current->value != idUser){
         current = current->next;
     }
-    if (current->value = idUser){
+    if (current->value == idUser){
         return current->admin;
     }
     else {
