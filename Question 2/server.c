@@ -186,6 +186,10 @@ void receiveMessage(void *sock_client)
         printf("Go to kick function\n");
         kick(msg, (*sock_cli).client);
       }
+      else if (strcmp(strto, "/users") == 0){
+        printf("Go to displayUsers function \n");
+        displayAllUsers((*sock_cli).client);
+      }
     }
     else
     {
@@ -327,4 +331,8 @@ void adminVerification(char* message, int client){
     else {
       sendSpecificMessage(client, "The command is : [/kick targetPseudo] \n");
     }
+  }
+
+  void displayAllUsers(int client){
+    sendSpecificMessage(client, getAllUsers(sockets));
   }

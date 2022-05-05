@@ -39,3 +39,5 @@ char* getPseudoById(List* list, int id);
 void setUserAdmin(List* list, int idUser);
 
 int isClientAdmin(List* list, int idUser);
+
+char* getAllUsers(List* list);

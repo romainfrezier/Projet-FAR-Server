@@ -33,4 +33,7 @@ void adminVerification(char* message, int client);
 
 void kick(char* message, int client);
 
+void displayAllUsers(int client);
+
+
 #endif // SERVER_H_

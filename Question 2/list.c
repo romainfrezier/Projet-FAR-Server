@@ -225,3 +225,28 @@ int isClientAdmin(List* list, int idUser){
         return -1;
     }
 }
+
+char* getAllUsers(List* list){
+    Link* current = list->head;
+    char* start = "Users connected : \n";
+    char* users = (char*)malloc(strlen(start));
+    strcpy(users, start);
+    while(current != NULL){
+        char* stringUser = (char*)malloc(30);
+        int taille = 0;
+        if (current->admin == 1){
+            strcat(stringUser, "(admin) ");
+            taille += 8;
+        }
+        strcat(stringUser, current->pseudo);
+        taille += strlen(current->pseudo);
+        if (current->next != NULL){
+            strcat(stringUser, ", ");
+            taille += 2;
+        }
+        users = realloc(users, strlen(users) + taille);
+        strcat(users, stringUser);
+        current = current->next;
+    }
+    return users;
+}

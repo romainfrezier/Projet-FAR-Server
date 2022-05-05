@@ -9,3 +9,5 @@ List of commands
 /admin adminKey : give you all the permission if the key is valid
 
 /kick pseudo : kick the user from the server
+
+/users : give you all the users currently connected
