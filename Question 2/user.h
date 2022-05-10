@@ -16,7 +16,7 @@ void sendSpecificMessage(int client, char *message); // Sending a specific messa
 void displayManuel(); // Display the commands manual
 void quitForUser(int n); // Allows User n to leave the server
 int receivePort(int socket); // receive a port from the server
-void sendFile(void* data); // send a file to the server in a different socket
+void sendFile(void* sendFileData); // send a file to the server in a different socket
 
 
 #endif // CLIENT_H_

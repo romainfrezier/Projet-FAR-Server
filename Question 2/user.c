@@ -15,7 +15,8 @@
 
 int dS;
 regex_t regex;
-
+struct sockaddr_in aS;
+char* ipAddress;
 // commands :
 //  - quit
 //  - private message
@@ -39,6 +40,7 @@ int main(int argc, char *argv[]) {
   printf("Start program\n");
   dS = socket(PF_INET, SOCK_STREAM, 0);
   printf("Socket created\n");
+  ipAddress = argv[1];
   struct sockaddr_in aS;
   aS.sin_family = AF_INET;
   inet_pton(AF_INET,argv[1],&(aS.sin_addr));
@@ -230,8 +232,19 @@ void quitForUser(int n)
 
 void sendFile(void* sendFileData)
 {
+  sendFileStruct* data = (sendFileStruct*)sendFileData;
   //connexion socket
+  int dSSendFile = socket(PF_INET, SOCK_STREAM, 0);
+  printf("Socket created for sending file\n");
+  struct sockaddr_in aSSendFile;
+  aSSendFile.sin_family = AF_INET;
+  inet_pton(AF_INET,ipAddress,&(aS.sin_addr));
+  aSSendFile.sin_port = data->port;
+  socklen_t lgA = sizeof(struct sockaddr_in);
+  connect(dSSendFile, (struct sockaddr *) &aSSendFile, lgA);
   //envoi contenu file par tcp
+
+
 }
 
 int receivePort(int socket){

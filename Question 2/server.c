@@ -42,6 +42,15 @@ int main(int argc, char *argv[])
   printf("Start program\n");
 
   int dS = socket(PF_INET, SOCK_STREAM, 0);
+  if (dS < 0)
+  {
+    redErrorMessage("ERROR opening socket");
+  }
+  int enable = 1;
+  if (setsockopt(dS, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+  {
+    redErrorMessage("setsockopt(SO_REUSEADDR) failed");
+  }
   printf("Socket created\n");
 
   struct sockaddr_in ad;
@@ -194,6 +203,9 @@ void receiveMessage(void *sock_client)
       else if (strcmp(strto, "/users") == 0){
         printf("Go to displayUsers function \n");
         displayAllUsers((*sock_cli).client);
+      }
+      else if (strcmp(strto, "/sfile") == 0){
+        
       }
     }
     else
