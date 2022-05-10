@@ -35,5 +35,6 @@ void kick(char* message, int client);
 
 void displayAllUsers(int client);
 
+void generateAdminKey(char* key);
 
 #endif // SERVER_H_

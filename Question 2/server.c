@@ -18,11 +18,13 @@ List *sockets;
 
 struct rk_sema sem;
 pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
-char* adminKey = "1234";
+char *adminKey = "1234";
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
 {
+  // adminKey = (char *)malloc(9 * sizeof(char));
+  // generateAdminKey(adminKey);
 
   // Definition of the socket array to the desired size
   sockets = createList(MAX_CONNECTION);
@@ -51,7 +53,9 @@ int main(int argc, char *argv[])
 
   listen(dS, MAX_CONNECTION);
   printf("Listening mode on port %d \n", atoi(argv[1]));
-
+  greenMessage("The admin key is : ");
+  greenMessage(adminKey);
+  printf("\n");
   struct sockaddr_in aC;
   socklen_t lg = sizeof(struct sockaddr_in);
   signal(SIGINT, serverQuit);
@@ -83,6 +87,7 @@ int main(int argc, char *argv[])
   } while (current->next != NULL);
 
   // Server shutdown
+  free(adminKey);
   shutdown(dS, 2);
   rk_sema_destroy(&sem);
   printf("End program\n");
@@ -291,19 +296,23 @@ void sendSpecificMessage(int client, char* message){
 }
 
 void adminVerification(char* message, int client){
-    if (verifCommand(message, 1) == 1){
-      char** mess = str_split(message, 2);
-      if (strcmp(adminKey, mess[1]) == 0){
-        char* pseudo = getPseudoById(sockets, client);
-        if (pseudo != NULL){
-          setUserAdmin(sockets, client);
-          sendSpecificMessage(client, "You are now an admin !\n");
-        }
-      }
-      else {
-        sendSpecificMessage(client, "That's not the current admin key !\n");
+  if (verifCommand(message, 1) == 1)
+  {
+    char **mess = str_split(message, 2);
+    if (strcmp(adminKey, mess[1]) == 0)
+    {
+      char *pseudo = getPseudoById(sockets, client);
+      if (pseudo != NULL)
+      {
+        setUserAdmin(sockets, client);
+        sendSpecificMessage(client, "You are now an admin !\n");
       }
     }
+    else
+    {
+      sendSpecificMessage(client, "That's not the current admin key !\n");
+    }
+  }
     else {
       sendSpecificMessage(client, "The command is : [/admin adminKey] \n");
     }
@@ -335,4 +344,11 @@ void adminVerification(char* message, int client){
 
   void displayAllUsers(int client){
     sendSpecificMessage(client, getAllUsers(sockets));
+  }
+  void generateAdminKey(char* key){
+    for (int i = 0; i < 10; i++)
+    {
+      char randomletter = 'A' + (rand() % 26);
+      strcat(key, &randomletter);
+    }
   }

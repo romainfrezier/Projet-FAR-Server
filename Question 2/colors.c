@@ -36,9 +36,7 @@ void redMessage(char *message)
 // Red for errors with exit
 void redErrorMessage(char *message)
 {
-    printf("\033[0;31m");
-    printf("%s", message);
-    reset();
+    redMessage(message);
     exit(0);
 }
 

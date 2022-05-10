@@ -9,6 +9,7 @@
 
 #include "user.h"
 #include "colors.h"
+#include "stringFunc.c"
 
 #define MAX 100
 
@@ -120,11 +121,11 @@ void receiveMessage(int socket){
       quitForUser(0);
     }
 
-    int resRegex;
+    int resRegexMp;
 
-    resRegex = regcomp(&regex, "^(mp)[:print:]*", 0);
-    resRegex = regexec(&regex, messageReceive, 0, NULL, 0);
-    if (resRegex == 0)
+    resRegexMp = regcomp(&regex, "^(mp)[:print:]*", 0);
+    resRegexMp = regexec(&regex, messageReceive, 0, NULL, 0);
+    if (resRegexMp == 0)
     {
       purpleMessage(messageReceive);
     }
@@ -150,8 +151,24 @@ void sendMessage(int socket){
     printf("\n");
     u_long size = strlen(m)+1;
 
+    int resRegexSFile;
+
+    resRegexSFile = regcomp(&regex, "^\/sfile[:print:]*", 0);
+    resRegexSFile = regexec(&regex, m, 0, NULL, 0);
     if (strcmp(m,"/man") == 0){
       displayManuel();
+    }
+    else if (resRegexSFile == 0)
+    {
+      sendSpecificMessage(socket, "/sfile");
+      int port = receivePort(socket);
+      char** cmd = str_split(m,1);
+      sendFileStruct data;
+      data.socketServer = socket;
+      data.port = port;
+      data.fileName = cmd[1];
+      pthread_t sendFileThread;
+      pthread_create(&sendFileThread, NULL, sendFile, &data);
     }
     else {
       sendSpecificMessage(socket, m);
@@ -209,4 +226,24 @@ void quitForUser(int n)
     exit(0);
   }
   exit(0);
+}
+
+void sendFile(void* sendFileData)
+{
+  //connexion socket
+  //envoi contenu file par tcp
+}
+
+int receivePort(int socket){
+  int port;
+  int receive = recv(socket, &port, sizeof(int), 0);
+  if (receive == -1)
+  {
+    redErrorMessage("Error message size received\n");
+  }
+  else if (receive == 0)
+  {
+    redErrorMessage("Server shutdown now !\n");
+  }
+  return port;
 }
