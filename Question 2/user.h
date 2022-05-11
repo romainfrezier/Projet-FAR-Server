@@ -6,8 +6,16 @@ typedef struct sendFileStruct sendFileStruct;
 struct sendFileStruct
 {
     int socketServer;
-    char* fileName;
-    int port;
+    char* cmd;
+};
+
+typedef struct fileStruct fileStruct;
+
+struct fileStruct
+{
+    size_t filenameSize;
+    char *filename;
+    long fileSize;
 };
 
 void receiveMessage(int socket);  // Reception of a server message
@@ -17,6 +25,8 @@ void displayManuel(); // Display the commands manual
 void quitForUser(int n); // Allows User n to leave the server
 int receivePort(int socket); // receive a port from the server
 void sendFile(void* sendFileData); // send a file to the server in a different socket
-
+void sendNumber(int socket, int number); // send an int to the socket
+void fileTransfer(int socket, fileStruct *file); // transfer the file to the socket
+void connectSocketFile(sendFileStruct* data); // connect socket for send file
 
 #endif // CLIENT_H_

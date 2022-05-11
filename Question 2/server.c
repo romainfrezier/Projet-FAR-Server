@@ -13,12 +13,16 @@
 #include "colors.h"
 #include "sema.h"
 
+#define SIZE 1024
+
 unsigned int MAX_CONNECTION = 3;
+
 List *sockets;
 
 struct rk_sema sem;
 pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
 char *adminKey = "1234";
+int dSfile;
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
@@ -41,12 +45,13 @@ int main(int argc, char *argv[])
 
   printf("Start program\n");
 
+  int enable = 1;
+
   int dS = socket(PF_INET, SOCK_STREAM, 0);
   if (dS < 0)
   {
     redErrorMessage("ERROR opening socket");
   }
-  int enable = 1;
   if (setsockopt(dS, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
   {
     redErrorMessage("setsockopt(SO_REUSEADDR) failed");
@@ -60,7 +65,27 @@ int main(int argc, char *argv[])
   bind(dS, (struct sockaddr *)&ad, sizeof(ad));
   printf("Socket named\n");
 
+  dSfile = socket(PF_INET, SOCK_STREAM, 0);
+  if (dSfile < 0)
+  {
+    redErrorMessage("ERROR opening socket file");
+  }
+  if (setsockopt(dSfile, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+  {
+    redErrorMessage("setsockopt(SO_REUSEADDR) failed for file");
+  }
+  printf("Socket file created\n");
+
+  struct sockaddr_in adFile;
+  adFile.sin_family = AF_INET;
+  adFile.sin_addr.s_addr = INADDR_ANY;
+  adFile.sin_port = htons(atoi(argv[1]) + 1);
+  bind(dSfile, (struct sockaddr *)&adFile, sizeof(adFile));
+  printf("File socket named\n");
+
   listen(dS, MAX_CONNECTION);
+  listen(dSfile, MAX_CONNECTION);
+
   printf("Listening mode on port %d \n", atoi(argv[1]));
   greenMessage("The admin key is : ");
   greenMessage(adminKey);
@@ -68,7 +93,9 @@ int main(int argc, char *argv[])
   struct sockaddr_in aC;
   socklen_t lg = sizeof(struct sockaddr_in);
   signal(SIGINT, serverQuit);
-  while (1)
+  pthread_t fileThread;
+  pthread_create(&fileThread, NULL, fileThreadFunc, NULL);
+  while (1) // TODO : Maybe another condition
   {
     // Users are accepted until max allow
     // Wait for space in the user list
@@ -84,7 +111,6 @@ int main(int argc, char *argv[])
     pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
 
     // Maybe free here
-    
   }
   // Shutdown of all user sockets
   Link *current = sockets->head;
@@ -102,39 +128,21 @@ int main(int argc, char *argv[])
   printf("End program\n");
 }
 
-void transmitMessage(void *sock_client)
-{
-  tss *sock_cli = (tss *)sock_client;
-  u_long pseudoSize = strlen((*sock_cli).pseudoSender) + 1;
-  struct rk_sema semSend;
-  rk_sema_init(&semSend, 1);
-
-  // strcat
-  u_long globalSize = pseudoSize + (*sock_cli).size + 1;
-  char *messageTransmited = (char *)malloc(globalSize * sizeof(char));
-  strcat(messageTransmited, (*sock_cli).pseudoSender);
-  strcat(messageTransmited, " : ");
-  strcat(messageTransmited, (*sock_cli).message);
-
-  // Transmit message size
-  sendSpecificMessage((*sock_cli).client, messageTransmited);
-  greenMessage("Message transmitted\n");
-}
-
 void receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;
   char *msg;
   u_long size;
-  char* pseudo;
+  char *pseudo;
   int check;
-  do{
+  do
+  {
     if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
     {
       redErrorMessage("Error message size received\n");
     }
     blueMessage("Size received\n");
-    pseudo = (char*)malloc(sizeof(char)*size);
+    pseudo = (char *)malloc(sizeof(char) * size);
     if (recv((*sock_cli).client, pseudo, size, 0) == -1)
     {
       redErrorMessage("Error message received\n");
@@ -143,10 +151,11 @@ void receiveMessage(void *sock_client)
     blueMessage(pseudo);
     printf("\n");
     check = pseudoInList(sockets, pseudo);
-    if (check == 0){
+    if (check == 0)
+    {
       sendSpecificMessage((*sock_cli).client, "Username already used !\nPlease choose another username : ");
     }
-  }while(check == 0);
+  } while (check == 0);
 
   sendSpecificMessage((*sock_cli).client, "Connected !");
   blueMessage("Pseudo accepted : ");
@@ -179,8 +188,8 @@ void receiveMessage(void *sock_client)
     if (msg[0] == '/')
     {
       printf("Command detected\n");
-      char* copyMessage = (char*)malloc(strlen(msg)+1);
-      strcpy(copyMessage,msg);
+      char *copyMessage = (char *)malloc(strlen(msg) + 1);
+      strcpy(copyMessage, msg);
       char *strto = strtok(copyMessage, " ");
       if (strcmp(msg, "/quit") == 0)
       {
@@ -190,22 +199,22 @@ void receiveMessage(void *sock_client)
       else if (strcmp(strto, "/mp") == 0)
       {
         printf("Go to private message\n");
-        sendPrivateMessage(msg,(*sock_cli).client);
+        sendPrivateMessage(msg, (*sock_cli).client);
       }
-      else if (strcmp(strto, "/admin") == 0){
+      else if (strcmp(strto, "/admin") == 0)
+      {
         printf("Go to admin verification\n");
         adminVerification(msg, (*sock_cli).client);
       }
-      else if (strcmp(strto, "/kick") == 0){
+      else if (strcmp(strto, "/kick") == 0)
+      {
         printf("Go to kick function\n");
         kick(msg, (*sock_cli).client);
       }
-      else if (strcmp(strto, "/users") == 0){
+      else if (strcmp(strto, "/users") == 0)
+      {
         printf("Go to displayUsers function \n");
         displayAllUsers((*sock_cli).client);
-      }
-      else if (strcmp(strto, "/sfile") == 0){
-        
       }
     }
     else
@@ -223,14 +232,34 @@ void receiveMessage(void *sock_client)
           (*sendData).size = size;
           (*sendData).message = msg;
           (*sendData).pseudoSender = getPseudoById(sockets, (*sock_cli).client);
-          // Execution of threads
+
+          // Execution of threads to send message to every one
           pthread_create(&send, NULL, transmitMessage, (void *)sendData);
         }
         current = current->next;
       }
     }
-    //free(msg);
+    // free(msg);
   }
+}
+
+void transmitMessage(void *sock_client)
+{
+  tss *sock_cli = (tss *)sock_client;
+  u_long pseudoSize = strlen((*sock_cli).pseudoSender) + 1;
+  struct rk_sema semSend;
+  rk_sema_init(&semSend, 1);
+
+  // strcat
+  u_long globalSize = pseudoSize + (*sock_cli).size + 1;
+  char *messageTransmited = (char *)malloc(globalSize * sizeof(char));
+  strcat(messageTransmited, (*sock_cli).pseudoSender);
+  strcat(messageTransmited, " : ");
+  strcat(messageTransmited, (*sock_cli).message);
+
+  // Transmit message size
+  sendSpecificMessage((*sock_cli).client, messageTransmited);
+  greenMessage("Message transmitted\n");
 }
 
 // Allows the server to stop
@@ -262,20 +291,22 @@ void userQuit(int socket)
 // Allows sending a private message
 void sendPrivateMessage(char *msg, int client)
 {
-  if (verifCommand(msg, 2) == 1){
-    char** mess = str_split(msg, 3);
-    char* cmd = (char*)malloc(strlen(mess[0]));
+  if (verifCommand(msg, 2) == 1)
+  {
+    char **mess = str_split(msg, 3);
+    char *cmd = (char *)malloc(strlen(mess[0]));
     cmd = mess[0];
-    char* target = mess[1];
+    char *target = mess[1];
     int id = getIdByPseudo(sockets, target);
-    if (id != NULL){
-      char* pseudo = getPseudoById(sockets, client);
-      char *mpPseudo = (char *)malloc(sizeof(char)*(strlen(pseudo)+strlen("(mp) ")));
-      strcat(mpPseudo,"(mp) ");
+    if (id != NULL)
+    {
+      char *pseudo = getPseudoById(sockets, client);
+      char *mpPseudo = (char *)malloc(sizeof(char) * (strlen(pseudo) + strlen("(mp) ")));
+      strcat(mpPseudo, "(mp) ");
       strcat(mpPseudo, pseudo);
       int commandSize = sizeof(cmd);
       int idSize = sizeof(target);
-      tss* sendData = (tss*)malloc(sizeof(tss));
+      tss *sendData = (tss *)malloc(sizeof(tss));
       (*sendData).client = id;
       (*sendData).size = strlen(mess[2]) + 1;
       (*sendData).message = mess[2];
@@ -283,31 +314,35 @@ void sendPrivateMessage(char *msg, int client)
       pthread_t send;
       pthread_create(&send, NULL, transmitMessage, (void *)sendData);
     }
-    else {
+    else
+    {
       sendSpecificMessage(client, "This user doesn't exist !");
       printf("The user doesn't exist ! \n");
     }
   }
-  else {
+  else
+  {
     sendSpecificMessage(client, "The command is : [/mp targetPseudo yourMessage] \n");
   }
 }
 
-void sendSpecificMessage(int client, char* message){
-    u_long sizeMessage = strlen(message) + 1;
-    // Send connection message size
-    if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
-    {
-      redErrorMessage("Error sending size\n");
-    }
-    // Send connection message
-    if (send(client, message, sizeMessage, 0) == -1)
-    {
-      redErrorMessage("Error sending connection message\n");
-    }
+void sendSpecificMessage(int client, char *message)
+{
+  u_long sizeMessage = strlen(message) + 1;
+  // Send connection message size
+  if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
+  {
+    redErrorMessage("Error sending size\n");
+  }
+  // Send connection message
+  if (send(client, message, sizeMessage, 0) == -1)
+  {
+    redErrorMessage("Error sending connection message\n");
+  }
 }
 
-void adminVerification(char* message, int client){
+void adminVerification(char *message, int client)
+{
   if (verifCommand(message, 1) == 1)
   {
     char **mess = str_split(message, 2);
@@ -325,42 +360,155 @@ void adminVerification(char* message, int client){
       sendSpecificMessage(client, "That's not the current admin key !\n");
     }
   }
-    else {
-      sendSpecificMessage(client, "The command is : [/admin adminKey] \n");
-    }
+  else
+  {
+    sendSpecificMessage(client, "The command is : [/admin adminKey] \n");
   }
+}
 
-  void kick(char* message, int client){
-    if (verifCommand(message, 1) == 1){
-      if (isClientAdmin(sockets, client) == 1){
-        char** mess = str_split(message, 2);
-        int idKickedClient = getIdByPseudo(sockets, mess[1]);
-        if (idKickedClient != NULL){
-          sendSpecificMessage(idKickedClient, "You have been kicked by an admin !\n");
-          printf("User %d has been kicked by admin %d \n", idKickedClient, client);
-          sendSpecificMessage(idKickedClient, "/quit");
-          sendSpecificMessage(client, "The user has been kicked !\n");
-        }
-        else {
-          sendSpecificMessage(client, "The user doesn't exist !\n");
-        }
-      }
-      else {
-        sendSpecificMessage(client, "You don't have the permission !\n");
-      }
-    }
-    else {
-      sendSpecificMessage(client, "The command is : [/kick targetPseudo] \n");
-    }
-  }
-
-  void displayAllUsers(int client){
-    sendSpecificMessage(client, getAllUsers(sockets));
-  }
-  void generateAdminKey(char* key){
-    for (int i = 0; i < 10; i++)
+void kick(char *message, int client)
+{
+  if (verifCommand(message, 1) == 1)
+  {
+    if (isClientAdmin(sockets, client) == 1)
     {
-      char randomletter = 'A' + (rand() % 26);
-      strcat(key, &randomletter);
+      char **mess = str_split(message, 2);
+      int idKickedClient = getIdByPseudo(sockets, mess[1]);
+      if (idKickedClient != NULL)
+      {
+        sendSpecificMessage(idKickedClient, "You have been kicked by an admin !\n");
+        printf("User %d has been kicked by admin %d \n", idKickedClient, client);
+        sendSpecificMessage(idKickedClient, "/quit");
+        sendSpecificMessage(client, "The user has been kicked !\n");
+      }
+      else
+      {
+        sendSpecificMessage(client, "The user doesn't exist !\n");
+      }
+    }
+    else
+    {
+      sendSpecificMessage(client, "You don't have the permission !\n");
     }
   }
+  else
+  {
+    sendSpecificMessage(client, "The command is : [/kick targetPseudo] \n");
+  }
+}
+
+void displayAllUsers(int client)
+{
+  sendSpecificMessage(client, getAllUsers(sockets));
+}
+
+void generateAdminKey(char *key)
+{
+  for (int i = 0; i < 10; i++)
+  {
+    char randomletter = 'A' + (rand() % 26);
+    strcat(key, &randomletter);
+  }
+}
+
+void fileThreadFunc()
+{
+  while (1)
+  {
+    struct sockaddr_in aCfile;
+    socklen_t lgFile = sizeof(struct sockaddr_in);
+    printf("thread file launched ! \n");
+    int acceptation = accept(dSfile, (struct sockaddr *)&aCfile, &lgFile);
+    printf("client %d connected to file sending \n", acceptation);
+
+    // ------------------------------------------------------ Recevoire la taille d'une struct puis une struct ----------------------------------------
+    // Size reception
+    int size;
+    if (recv(acceptation, &size, sizeof(int), 0) == -1)
+    {
+      redErrorMessage("Error message size received\n");
+    }
+    blueMessage("Size received\n");
+    printf("Taille de la commande %d \n", size);
+    // Message reception
+    fileStruct *fileInfo = (fileStruct *)malloc(size);
+    if (recv(acceptation, fileInfo, size, 0) == -1)
+    {
+      redErrorMessage("Error message received\n");
+    }
+    blueMessage("Message received\n");
+    printf("msg : %s\n", fileInfo->filename);
+    // ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    printf("Go to receiveFile function :\n");
+    receiveFile(fileInfo, acceptation);
+    }
+
+  // Server shutdown
+  shutdown(dSfile, 2);
+  printf("End fileThread Func\n");
+}
+
+void receiveFile(fileStruct* fileInfo, int client)
+{
+  fileStruct* file = fileInfo;
+  printf("on est la : %s\n", file->filename);
+  pthread_t receiveThread;
+  trf receiveFileData;
+  receiveFileData.fileName = file->filename;
+  receiveFileData.client = client;
+  receiveFileData.fileSize = file->fileSize;
+  pthread_create(&receiveThread, NULL, fileTransferReception, &receiveFileData);
+}
+
+void fileTransferReception(void *receiveFileData)
+{
+  printf("Into fileTransferReception()\n");
+
+  trf *data = (trf *)receiveFileData;
+  char *filename = data->fileName;
+  int socket = data->client;
+  printf("filename : %s\n", filename);
+  printf("data->fileName : %s\n", data->fileName);
+
+  FILE *fprecv;
+  char buffer[SIZE];
+  int recvBuffer;
+
+  char *folder = "serverStorage/toto.jpeg";
+  char *path = (char *)malloc((strlen(folder) + strlen(filename)) * sizeof(char));
+  strcat(path, folder);
+  strcat(path, filename);
+  printf("path : %s\n",path);
+
+  long fileSize = data->fileSize;
+  printf("fileSize : %ld\n", fileSize);
+  fprecv = fopen(path, "w+"); // open the file in "path" to write inside. Overwrite it if it already exists, create it if not
+
+  int count;
+  for (int i = 0; i < fileSize; i += SIZE) // receive file block by block of SIZE byts until there are no more byts to receive
+  {
+    if (i + SIZE < fileSize) // Calculate the size of the block to receive
+    {
+      count = SIZE;
+    }
+    else
+    {
+      count = fileSize - i;
+    }
+
+    recvBuffer = recv(socket, buffer, SIZE, 0); // receive the block of bytes from the user
+    if (recvBuffer <= 0)
+    {
+      perror("Error in receiving buffer.");
+      exit(1);
+    }
+    printf("before write\n");
+    fwrite(buffer, sizeof(buffer), 1, fprecv); // write file
+    printf("written\n");
+    bzero(buffer, SIZE);
+  }
+  printf("here 5\n");
+  fclose(fprecv);
+  return;
+}
