@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "regex.h": "c",
+        "pthread.h": "c",
+        "user.h": "c",
+        "colors.h": "c",
+        "stringfunc.h": "c",
+        "fileuser.h": "c",
+        "commanduser.h": "c"
+    }
+}

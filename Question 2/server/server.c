@@ -197,7 +197,7 @@ void receiveMessage(void *sock_client)
         userQuit((*sock_cli).client);
         break;
       }
-      else if (strcmp(strto, "/mp") == 0)
+      else if (strcmp(strto, "/pm") == 0)
       {
         printf("Go to private message\n");
         sendPrivateMessage(msg, (*sock_cli).client);
@@ -307,16 +307,16 @@ void sendPrivateMessage(char *msg, int client)
     if (id != NULL)
     {
       char *pseudo = getPseudoById(sockets, client);
-      char *mpPseudo = (char *)malloc(sizeof(char) * (strlen(pseudo) + strlen("(mp) ")));
-      strcat(mpPseudo, "(mp) ");
-      strcat(mpPseudo, pseudo);
+      char *pmPseudo = (char *)malloc(sizeof(char) * (strlen(pseudo) + strlen("(pm) ")));
+      strcat(pmPseudo, "(pm) ");
+      strcat(pmPseudo, pseudo);
       int commandSize = sizeof(cmd);
       int idSize = sizeof(target);
       tss *sendData = (tss *)malloc(sizeof(tss));
       (*sendData).client = id;
       (*sendData).size = strlen(mess[2]) + 1;
       (*sendData).message = mess[2];
-      (*sendData).pseudoSender = mpPseudo;
+      (*sendData).pseudoSender = pmPseudo;
       pthread_t send;
       pthread_create(&send, NULL, transmitMessage, (void *)sendData);
     }
@@ -328,7 +328,7 @@ void sendPrivateMessage(char *msg, int client)
   }
   else
   {
-    sendSpecificMessage(client, "The command is : [/mp targetPseudo yourMessage] \n");
+    sendSpecificMessage(client, "The command is : [/pm targetPseudo yourMessage] \n");
   }
 }
 
