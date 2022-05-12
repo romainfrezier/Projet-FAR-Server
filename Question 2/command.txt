@@ -11,3 +11,7 @@ List of commands
 /kick pseudo : kick the user from the server
 
 /users : give you all the users currently connected
+
+/sfile fileName : Send a file to the server
+
+/files : display all the files stored on the server

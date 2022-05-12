@@ -21,7 +21,6 @@
 
 char** str_split(char *msg, int n)
 {
-    printf("Message : %s\n", msg);
     int i = 0;
     char* p = strtok(msg, " ");
     char** array =(char**)malloc(n*sizeof(char*));

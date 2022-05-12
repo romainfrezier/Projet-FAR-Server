@@ -232,7 +232,7 @@ char* getAllUsers(List* list){
     char* users = (char*)malloc(strlen(start));
     strcpy(users, start);
     while(current != NULL){
-        char* stringUser = (char*)malloc(30);
+        char *stringUser = (char *)malloc(strlen(current->pseudo) + strlen("(admin) "));
         int taille = 0;
         if (current->admin == 1){
             strcat(stringUser, "(admin) ");

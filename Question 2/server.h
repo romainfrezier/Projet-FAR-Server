@@ -33,7 +33,6 @@ typedef struct fileStruct fileStruct;
 struct fileStruct
 {
     size_t filenameSize;
-    char *filename;
     long fileSize;
 };
 
@@ -49,6 +48,7 @@ void kick(char* message, int client); // kick a user from the server
 void displayAllUsers(int client); // display all the users connected for the user
 void generateAdminKey(char* key); // generate an admin key
 void fileThreadFunc();
-void receiveFile(fileStruct *fileInfo, int client);
+void receiveFile(fileStruct *fileInfo, int client, char *filename);
 void fileTransferReception(void *receiveFileData);
+char *listFile(char *folder);
 #endif // SERVER_H_

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <dirent.h>
 
 #include "stringFunc.h"
 #include "list.h"
@@ -216,6 +217,11 @@ void receiveMessage(void *sock_client)
         printf("Go to displayUsers function \n");
         displayAllUsers((*sock_cli).client);
       }
+      else if (strcmp(strto, "/files") == 0)
+      {
+        printf("Go to list file function \n");
+        sendSpecificMessage((*sock_cli).client, listFile("./serverStorage"));
+      }
     }
     else
     {
@@ -402,6 +408,31 @@ void displayAllUsers(int client)
   sendSpecificMessage(client, getAllUsers(sockets));
 }
 
+char* listFile(char *folder){
+  DIR *d;
+  struct dirent *dir;
+  char *fileList = "List of server files : \n\n";
+  char *finalString = (char *)malloc(strlen(fileList));
+  strcpy(finalString, fileList);
+  d = opendir("./serverStorage");
+  if (d)
+  {
+    while ((dir = readdir(d)) != NULL)
+    {
+      if ((strcmp(dir->d_name, ".") != 0) && (strcmp(dir->d_name, "..") != 0)){
+        char *filename = (char *)malloc((strlen(dir->d_name)) * sizeof(char) + strlen("\n") + strlen("  - "));
+        strcat(filename, "  - ");
+        strcat(filename, dir->d_name);
+        strcat(filename, "\n");
+        finalString = (char *)realloc(finalString, (strlen(finalString) + strlen(filename)) * sizeof(char));
+        strcat(finalString, filename);
+      }
+    }
+    closedir(d);
+  }
+  return finalString;
+}
+
 void generateAdminKey(char *key)
 {
   for (int i = 0; i < 10; i++)
@@ -417,72 +448,70 @@ void fileThreadFunc()
   {
     struct sockaddr_in aCfile;
     socklen_t lgFile = sizeof(struct sockaddr_in);
-    printf("thread file launched ! \n");
     int acceptation = accept(dSfile, (struct sockaddr *)&aCfile, &lgFile);
-    printf("client %d connected to file sending \n", acceptation);
 
-    // ------------------------------------------------------ Recevoire la taille d'une struct puis une struct ----------------------------------------
+    // ------------- Recevoir la taille d'une struct, une struct, puis filename -------------
     // Size reception
     int size;
     if (recv(acceptation, &size, sizeof(int), 0) == -1)
     {
-      redErrorMessage("Error message size received\n");
+      redErrorMessage("Error struct size received\n");
     }
     blueMessage("Size received\n");
-    printf("Taille de la commande %d \n", size);
-    // Message reception
-    fileStruct *fileInfo = (fileStruct *)malloc(size);
+
+    // Struct reception
+    fileStruct *fileInfo = (fileStruct*)malloc(size);
     if (recv(acceptation, fileInfo, size, 0) == -1)
     {
-      redErrorMessage("Error message received\n");
+      redErrorMessage("Error struct received\n");
     }
-    blueMessage("Message received\n");
-    printf("msg : %s\n", fileInfo->filename);
-    // ------------------------------------------------------------------------------------------------------------------------------------------------
+    blueMessage("Struct received\n");
 
-    printf("Go to receiveFile function :\n");
-    receiveFile(fileInfo, acceptation);
+    // filename reception
+    char *filename = (char*)malloc(fileInfo->filenameSize);
+    if (recv(acceptation, filename, fileInfo->filenameSize, 0) == -1)
+    {
+      redErrorMessage("Error filename received\n");
+    }
+    blueMessage("Filename received\n");
+    // --------------------------------------------------------------------------------------
+
+    receiveFile(fileInfo, acceptation, filename);
     }
 
-  // Server shutdown
+  // File thread shutdown
   shutdown(dSfile, 2);
-  printf("End fileThread Func\n");
 }
 
-void receiveFile(fileStruct* fileInfo, int client)
+void receiveFile(fileStruct* fileInfo, int client, char* filename)
 {
   fileStruct* file = fileInfo;
-  printf("on est la : %s\n", file->filename);
   pthread_t receiveThread;
   trf receiveFileData;
-  receiveFileData.fileName = file->filename;
   receiveFileData.client = client;
   receiveFileData.fileSize = file->fileSize;
+  receiveFileData.fileName = filename;
   pthread_create(&receiveThread, NULL, fileTransferReception, &receiveFileData);
+  pthread_join(receiveThread, 0);
+  shutdown(client,2);
 }
 
 void fileTransferReception(void *receiveFileData)
 {
-  printf("Into fileTransferReception()\n");
-
   trf *data = (trf *)receiveFileData;
   char *filename = data->fileName;
   int socket = data->client;
-  printf("filename : %s\n", filename);
-  printf("data->fileName : %s\n", data->fileName);
 
   FILE *fprecv;
   char buffer[SIZE];
   int recvBuffer;
 
-  char *folder = "serverStorage/toto.jpeg";
+  char *folder = "serverStorage/";
   char *path = (char *)malloc((strlen(folder) + strlen(filename)) * sizeof(char));
   strcat(path, folder);
   strcat(path, filename);
-  printf("path : %s\n",path);
 
   long fileSize = data->fileSize;
-  printf("fileSize : %ld\n", fileSize);
   fprecv = fopen(path, "w+"); // open the file in "path" to write inside. Overwrite it if it already exists, create it if not
 
   int count;
@@ -503,12 +532,12 @@ void fileTransferReception(void *receiveFileData)
       perror("Error in receiving buffer.");
       exit(1);
     }
-    printf("before write\n");
     fwrite(buffer, sizeof(buffer), 1, fprecv); // write file
-    printf("written\n");
     bzero(buffer, SIZE);
   }
-  printf("here 5\n");
+  greenMessage("File written as ");
+  greenMessage(path);
+  printf("\n");
   fclose(fprecv);
   return;
 }

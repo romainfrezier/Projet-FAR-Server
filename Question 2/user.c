@@ -65,17 +65,6 @@ int main(int argc, char *argv[])
   socklen_t lgA = sizeof(struct sockaddr_in);
   connect(dS, (struct sockaddr *)&aS, lgA);
 
-  dSFileSend = socket(PF_INET, SOCK_STREAM, 0);
-  if (dSFileSend < 0)
-  {
-    redErrorMessage("ERROR opening socket for sending file");
-  }
-  if (setsockopt(dSFileSend, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-  {
-    redErrorMessage("setsockopt(SO_REUSEADDR) failed");
-  }
-  printf("Socket for file created\n");
-
   signal(SIGINT, quitForUser);
 
   int check;
@@ -153,7 +142,6 @@ void sendMessage(int socket)
     else if (resRegexSFile == 0)
     {
       // send socket data to the server
-      printf("Go to create socket function ! \n");
       sendFileStruct data;
       data.socketServer = socket;
       data.cmd = m;
@@ -217,9 +205,18 @@ void receiveMessage(int socket)
   free(m);
 }
 
-void connectSocketFile(sendFileStruct* data)
+void  connectSocketFile(sendFileStruct* data)
 {
-  printf("message : %s \n", data->cmd);
+  int enable = 1;
+  dSFileSend = socket(PF_INET, SOCK_STREAM, 0);
+  if (dSFileSend < 0)
+  {
+    redErrorMessage("ERROR opening socket for sending file");
+  }
+  if (setsockopt(dSFileSend, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+  {
+    redErrorMessage("setsockopt(SO_REUSEADDR) failed");
+  }
 
   // value for connection to the socket
   struct sockaddr_in aSfile;
@@ -228,16 +225,13 @@ void connectSocketFile(sendFileStruct* data)
   aSfile.sin_port = htons(portSendingFile);
   socklen_t lgFile = sizeof(struct sockaddr_in);
 
-  // Tests
-  printf("ip : %s\n", ipAddress);
-  printf("port htons : %d\n", portSendingFile);
-  printf("arriving in connectsocket function ! \n");
-
   int resCoFile = connect(dSFileSend, (struct sockaddr *)&aSfile, lgFile);  // connection to the socket
-  if (resCoFile == 0)
+  if (resCoFile == 0) 
   {
-    greenMessage("Begin of the file transfert\n");
+    blueMessage("Begin of the file transfer...\n");
     pthread_create(&fileThread, NULL, sendFile, data);
+    pthread_join(fileThread, 0);
+    shutdown(dSFileSend, 2);
   }
   else
   {
@@ -253,64 +247,65 @@ void sendFile(void *sendFileData)
   
   size_t filenameSize = strlen(mess[1]);
   
-  // get the file size
+  // get file path
   char *folder = "userStorage/";
   char *path = (char *)malloc((strlen(folder) + filenameSize) * sizeof(char));
   strcat(path, folder);
   strcat(path, mess[1]);
   
+  // get the file size
   fp = fopen(path, "rb");
-  fseek(fp, 0, SEEK_END);      // Jump to the end of the file
-  long fileSize = ftell(fp);   // Get the current byte offset in the file
-  rewind(fp);                  // Jump back to the beginning of the file
-  fclose(fp);
-  
-  // ------------------------ Send fileStruct ------------------------
-
-  // Tests
-  printf("mess[1] : %s\n", mess[1]);
-  printf("fileSize : %ld\n", fileSize);
-  printf("filenameSize : %zu\n", filenameSize);
-
-  // fill the struct
-  fileStruct *file = (fileStruct*)malloc(sizeof(fileStruct));
-  file->filename = mess[1];
-  file->filenameSize = filenameSize;
-  file->fileSize = fileSize;
-
-  int structSize = sizeof(fileStruct);
-  if (send(dSFileSend, &structSize, sizeof(int), 0) == -1) // send the size of the struct
+  if (fp == NULL)
   {
-    perror("Error in sending struct size.");
-    exit(1);
-  }
-  if (send(dSFileSend, file, structSize, 0) == -1) // send the struct
+    redMessage("The file doesn't exist !\n");
+  } 
+  else
   {
-    perror("Error in sending struct size.");
-    exit(1);
+    fseek(fp, 0, SEEK_END);      // Jump to the end of the file
+    long fileSize = ftell(fp);   // Get the current byte offset in the file
+    rewind(fp);                  // Jump back to the beginning of the file
+    fclose(fp);
+    
+    // ------------------------ Send fileStruct and filename --------------------------
+
+    char *filename = mess[1];
+    // fill the struct
+    fileStruct *file = (fileStruct*)malloc(sizeof(fileStruct));
+    file->filenameSize = filenameSize;
+    file->fileSize = fileSize;
+
+    int structSize = sizeof(*file);
+    if (send(dSFileSend, &structSize, sizeof(int), 0) == -1) // send the size of the struct
+    {
+      redErrorMessage("Error in sending struct size\n");
+    }
+    if (send(dSFileSend, file, structSize, 0) == -1) // send the struct
+    {
+      redErrorMessage("Error in sending struct size\n");
+    }
+    if (send(dSFileSend, filename, file->filenameSize, 0) == -1) // send the filename
+    {
+      redErrorMessage("Error in sending filename\n");
+    }
+    // --------------------------------------------------------------------------------
+    fileTransfer(dSFileSend, file, filename);
   }
 
-  // -----------------------------------------------------------------
-  fileTransfer(dSFileSend, file);
-  printf("Enter your message (100 max) :\n");
 }
 
-void fileTransfer(int socket, fileStruct *file)
+void fileTransfer(int socket, fileStruct *file, char* name)
 {
-  printf("Into fileTransfer()\n");
   FILE *fp;
   char buffer[SIZE];
   fileStruct *fileData = file;
 
   char *folder = "userStorage/";
-  char *filename = fileData->filename;
+  char *filename = name;
   long fileSize = fileData->fileSize;
   char *path = (char *)malloc((strlen(folder) + fileData->filenameSize) * sizeof(char));
   strcat(path, folder);
   strcat(path, filename);
-  printf("path : %s\n", path);
   fp = fopen(path, "rb");   // Open the file in binary mode
-  printf("here 2\n");
 
   int count;
   for (int i = 0; i < fileSize; i += SIZE) // send file block by block of SIZE byts until there are no more byts to send
@@ -331,10 +326,9 @@ void fileTransfer(int socket, fileStruct *file)
       exit(1);
     }
     bzero(buffer, SIZE); // Reset the buffer
-    printf("here 4\n");
   }
   fclose(fp); // Close the file
-  printf("here 5\n");
+  greenMessage("File send succesfully\n");
 }
 
 void sendSpecificMessage(int client, char *message)
