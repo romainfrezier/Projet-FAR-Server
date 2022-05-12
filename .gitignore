@@ -177,6 +177,9 @@ Temporary Items
 .history
 .ionide
 
+.idea
+.vscode
+
 # Ignore test folder
 /Test
 # Support for Project snippet scope
