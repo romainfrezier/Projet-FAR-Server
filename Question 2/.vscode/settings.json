@@ -6,6 +6,12 @@
         "colors.h": "c",
         "stringfunc.h": "c",
         "fileuser.h": "c",
-        "commanduser.h": "c"
+        "commanduser.h": "c",
+        "fileserver.h": "c",
+        "list.h": "c",
+        "server.h": "c",
+        "sema.h": "c",
+        "admin.h": "c",
+        "commandserver.h": "c"
     }
 }

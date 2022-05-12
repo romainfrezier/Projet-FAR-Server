@@ -177,8 +177,8 @@ Temporary Items
 .history
 .ionide
 
-.idea
-.vscode
+*.idea*
+*.vscode*
 
 # Ignore test folder
 /Test
