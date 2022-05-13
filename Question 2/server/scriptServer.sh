@@ -1,2 +1,2 @@
-gcc -o server server.c lib/colors.c lib/list.c lib/stringFunc.c lib/sema.c lib/fileServer.c lib/admin.c lib/commandServer.c -lpthread;
+gcc -o server server.c lib/src/colors.c lib/src/list.c lib/src/stringFunc.c lib/src/sema.c lib/src/fileServer.c lib/src/admin.c lib/src/commandServer.c -lpthread;
 ./server $1;

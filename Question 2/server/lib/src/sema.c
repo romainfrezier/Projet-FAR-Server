@@ -4,7 +4,7 @@
 #include <semaphore.h>
 #endif
 
-#include "sema.h"
+#include "../headers/sema.h"
 
 void rk_sema_init(struct rk_sema *s, u_int32_t value)
 {

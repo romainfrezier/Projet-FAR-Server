@@ -6,13 +6,13 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "list.h"
-#include "server.h"
-#include "admin.h"
-#include "sema.h"
-#include "colors.h"
-#include "fileServer.h"
-#include "commandServer.h"
+#include "../headers/list.h"
+#include "../headers/server.h"
+#include "../headers/admin.h"
+#include "../headers/sema.h"
+#include "../headers/colors.h"
+#include "../headers/fileServer.h"
+#include "../headers/commandServer.h"
 
 int checkCommand(char *msg, tsr *sock_cli)
 {

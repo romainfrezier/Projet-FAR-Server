@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "admin.h"
-#include "list.h"
-#include "server.h"
-#include "stringFunc.h"
+#include "../headers/admin.h"
+#include "../headers/list.h"
+#include "../headers/server.h"
+#include "../headers/stringFunc.h"
 
 char* adminKey = "1234";
 
@@ -23,7 +23,7 @@ void kick(char *message, int client)
 {
     if (verifCommand(message, 1) == 1)
     {
-        if (isClientAdmin(sockets, client) == 1)
+        if (isUserAdmin(sockets, client) == 1)
         {
             char **mess = str_split(message, 2);
             int idKickedClient = getIdByPseudo(sockets, mess[1]);

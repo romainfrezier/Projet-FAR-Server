@@ -7,23 +7,22 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "lib/stringFunc.h"
-#include "lib/list.h"
-#include "lib/server.h"
-#include "lib/colors.h"
-#include "lib/sema.h"
-#include "lib/fileServer.h"
-#include "lib/admin.h"
-#include "lib/commandServer.h"
+#include "lib/headers/stringFunc.h"
+#include "lib/headers/list.h"
+#include "lib/headers/server.h"
+#include "lib/headers/colors.h"
+#include "lib/headers/sema.h"
+#include "lib/headers/fileServer.h"
+#include "lib/headers/admin.h"
+#include "lib/headers/commandServer.h"
 
 unsigned int MAX_CONNECTION = 3;
-
-// List *sockets;
 
 struct rk_sema sem;
 List *sockets;
 pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
-int dSfile;
+int dSFileGet;
+int dSFileSend;
 
 // We want to create a send thread and a recption thread for each user
 int main(int argc, char *argv[])
@@ -63,26 +62,45 @@ int main(int argc, char *argv[])
   bind(dS, (struct sockaddr *)&ad, sizeof(ad));
   printf("Socket named\n");
 
-  dSfile = socket(PF_INET, SOCK_STREAM, 0);
-  if (dSfile < 0)
+  dSFileGet = socket(PF_INET, SOCK_STREAM, 0);
+  if (dSFileGet < 0)
   {
-    redErrorMessage("ERROR opening socket file");
+    redErrorMessage("ERROR opening socket fileGet");
   }
-  if (setsockopt(dSfile, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+  if (setsockopt(dSFileGet, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
   {
-    redErrorMessage("setsockopt(SO_REUSEADDR) failed for file");
+    redErrorMessage("setsockopt(SO_REUSEADDR) failed for fileGet");
   }
-  printf("Socket file created\n");
+  printf("Socket fileGet created\n");
 
-  struct sockaddr_in adFile;
-  adFile.sin_family = AF_INET;
-  adFile.sin_addr.s_addr = INADDR_ANY;
-  adFile.sin_port = htons(atoi(argv[1]) + 1);
-  bind(dSfile, (struct sockaddr *)&adFile, sizeof(adFile));
-  printf("File socket named\n");
+  struct sockaddr_in adFileGet;
+  adFileGet.sin_family = AF_INET;
+  adFileGet.sin_addr.s_addr = INADDR_ANY;
+  adFileGet.sin_port = htons(atoi(argv[1]) + 1);
+  bind(dSFileGet, (struct sockaddr *)&adFileGet, sizeof(adFileGet));
+  printf("File socketGet named\n");
+
+  dSFileSend = socket(PF_INET, SOCK_STREAM, 0);
+  if (dSFileSend < 0)
+  {
+    redErrorMessage("ERROR opening socket fileSend");
+  }
+  if (setsockopt(dSFileSend, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+  {
+    redErrorMessage("setsockopt(SO_REUSEADDR) failed for fileSend");
+  }
+  printf("Socket fileSend created\n");
+
+  struct sockaddr_in adFileSend;
+  adFileSend.sin_family = AF_INET;
+  adFileSend.sin_addr.s_addr = INADDR_ANY;
+  adFileSend.sin_port = htons(atoi(argv[1]) + 2);
+  bind(dSFileSend, (struct sockaddr *)&adFileSend, sizeof(adFileSend));
+  printf("File socketGet named\n");
 
   listen(dS, MAX_CONNECTION);
-  listen(dSfile, MAX_CONNECTION);
+  listen(dSFileGet, MAX_CONNECTION);
+  listen(dSFileSend, MAX_CONNECTION);
 
   printf("Listening mode on port %d \n", atoi(argv[1]));
   greenMessage("The admin key is : ");
@@ -92,10 +110,14 @@ int main(int argc, char *argv[])
   socklen_t lg = sizeof(struct sockaddr_in);
   signal(SIGINT, serverQuit);
 
-  int *arg = malloc(sizeof(int));
-  *arg = dSfile;
-  pthread_t fileThread;
-  pthread_create(&fileThread, NULL, fileThreadFunc, arg);
+  pthread_t fileGetThread;
+  int *argGet = malloc(sizeof(int));
+  *argGet = dSFileGet;
+  pthread_create(&fileGetThread, NULL, fileGetThreadFunc, argGet);
+  int *argSend = malloc(sizeof(int));
+  *argSend = dSFileSend;
+  pthread_t fileSendThread;
+  pthread_create(&fileSendThread, NULL, fileSendThreadFunc, argSend);
   while (1)
   {
     // Users are accepted until max allow
@@ -110,8 +132,6 @@ int main(int argc, char *argv[])
     (*receiveData).clients = sockets;
     pthread_t receive;
     pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
-
-    
   }
   // Shutdown of all user sockets
   Link *current = sockets->head;

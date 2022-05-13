@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "list.h"
+
+#include "../headers/list.h"
 
 // Boolean : 0 = true ; 1 = false
 
@@ -213,7 +214,7 @@ void setUserAdmin(List* list, int idUser){
     }
 }
 
-int isClientAdmin(List* list, int idUser){
+int isUserAdmin(List* list, int idUser){
     Link* current = list->head;
     while (current != NULL && current->value != idUser){
         current = current->next;

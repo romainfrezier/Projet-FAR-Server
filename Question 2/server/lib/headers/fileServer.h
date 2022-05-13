@@ -3,6 +3,14 @@
 
 typedef struct fileStruct fileStruct;
 
+typedef struct sendFileStruct sendFileStruct;
+
+struct sendFileStruct
+{
+    int client;
+    char *filename;
+};
+
 struct fileStruct
 {
     size_t filenameSize;
@@ -11,16 +19,19 @@ struct fileStruct
 
 typedef struct thread_receiveFile trf;
 
-struct thread_receiveFile {
-    char* fileName;
+struct thread_receiveFile
+{
+    char *fileName;
     int client;
     long fileSize;
 };
 
-
-void fileThreadFunc(void* arg);
+void fileGetThreadFunc(void *arg);
+void fileSendThreadFunc(void *arg);
 void receiveFile(fileStruct *fileInfo, int client, char *filename);
 void fileTransferReception(void *receiveFileData);
 char *listFile(char *folder);
+void prepareSendingFile(void* data);
+void sendFile(int client, fileStruct* file, char* filename);
 
 #endif // FILESERVER_H_
