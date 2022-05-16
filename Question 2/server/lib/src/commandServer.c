@@ -71,7 +71,7 @@ void serverQuit(int n)
 
 void displayAllUsers(int client)
 {
-    sendSpecificMessage(client, getAllUsers(sockets));
+    sendSpecificMessage(client, getAllUsers(sockets, client));
 }
 
 // Allows a user to leave the server

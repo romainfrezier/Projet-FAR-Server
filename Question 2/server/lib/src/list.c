@@ -227,27 +227,61 @@ int isUserAdmin(List* list, int idUser){
     }
 }
 
-char* getAllUsers(List* list){
+char *getAllUsers(List *list, int client)
+{
     Link* current = list->head;
-    char* start = "Users connected : \n";
-    char* users = (char*)malloc(strlen(start));
+    char *start = "Users connected : \n";
+
+    // List of different components of the user list
+    char *admin = "(admin)";
+    char *me = "(me)";
+    char *tab = "   - ";
+    char *space = " ";
+    char *retn = "\n";
+
+    char *users = (char *)malloc(strlen(start));
     strcpy(users, start);
+    
     while(current != NULL){
-        char *stringUser = (char *)malloc(strlen(current->pseudo) + strlen("(admin) "));
         int taille = 0;
-        if (current->admin == 1){
-            strcat(stringUser, "(admin) ");
-            taille += 8;
+        char *stringUser;
+        if (current->admin == 1 && current->value == client)
+        {
+            stringUser = (char *)malloc(strlen(current->pseudo) + strlen(tab) + strlen(admin) + strlen(me) + strlen(space) + strlen(retn));
+            strcat(stringUser, tab);
+            strcat(stringUser, me);
+            strcat(stringUser, admin);
+            strcat(stringUser, space);
+            taille += strlen(tab) + strlen(admin) + strlen(me) + strlen(space) + strlen(retn);
+        }
+        else if (current->value == client && current->admin != 1)
+        {
+            stringUser = (char *)malloc(strlen(current->pseudo) + strlen(tab) + strlen(me) + strlen(space) + strlen(retn));
+            strcat(stringUser, tab);
+            strcat(stringUser, me);
+            strcat(stringUser, space);
+            taille += strlen(tab) + strlen(me) + strlen(space) + strlen(retn);
+        }
+        else if (current->value != client && current->admin == 1)
+        {
+            stringUser = (char *)malloc(strlen(current->pseudo) + strlen(tab) + strlen(admin) + strlen(space) + strlen(retn));
+            strcat(stringUser, tab);
+            strcat(stringUser, admin);
+            strcat(stringUser, space);
+            taille += strlen(tab) + strlen(admin) + strlen(space) + strlen(retn);
+        } 
+        else {
+            stringUser = (char *)malloc(strlen(current->pseudo) + strlen(tab) + strlen(me) + strlen(space) + strlen(retn));
+            strcat(stringUser, tab);
+            taille += strlen(tab) + strlen(retn);
         }
         strcat(stringUser, current->pseudo);
+        strcat(stringUser, retn);
         taille += strlen(current->pseudo);
-        if (current->next != NULL){
-            strcat(stringUser, ", ");
-            taille += 2;
-        }
         users = realloc(users, strlen(users) + taille);
         strcat(users, stringUser);
         current = current->next;
+        free(stringUser);
     }
     return users;
 }

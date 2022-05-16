@@ -27,4 +27,4 @@ int getIdByPseudo(List* list, char* pseudo);
 char* getPseudoById(List* list, int id);
 void setUserAdmin(List* list, int idClient);
 int isUserAdmin(List *list, int idClient);
-char* getAllUsers(List* list);
+char *getAllUsers(List *list, int client);
