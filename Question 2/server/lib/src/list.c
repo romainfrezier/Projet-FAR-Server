@@ -6,6 +6,7 @@
 
 // Boolean : 0 = true ; 1 = false
 
+// create an empty list
 List *createList(int size)
 {
     List *list = (List *)malloc(sizeof(List));
@@ -14,6 +15,7 @@ List *createList(int size)
     return list;
 }
 
+// check if the list is empty. Return 0 if the list is empty
 int listIsEmpty(List *list)
 {
     if (list->head == NULL)
@@ -26,6 +28,7 @@ int listIsEmpty(List *list)
     }
 }
 
+// add a user to the first position of the list
 void addFirst(List *list, int value, char *pseudo)
 {
     if (list->size == 0)
@@ -52,6 +55,7 @@ void addFirst(List *list, int value, char *pseudo)
     }
 }
 
+// go to the next Link of the list
 Link *next(Link *link)
 {
     if (link->next == NULL)
@@ -64,6 +68,7 @@ Link *next(Link *link)
     }
 }
 
+// delete the first element of the list
 void delFirst(List *list)
 {
     if (list->head != NULL)
@@ -74,6 +79,7 @@ void delFirst(List *list)
     }
 }
 
+// delete an element of the list passed in arguments
 void delVal(List *list, int val)
 {
     if (listIsEmpty(list) == 1)
@@ -94,6 +100,7 @@ void delVal(List *list, int val)
     }
 }
 
+// recursive function to delete an element of the list
 void delValAux(Link *link, int val)
 {
     if (link->next != NULL)
@@ -115,6 +122,7 @@ void delValAux(Link *link, int val)
     }
 }
 
+// chek if the pseudo is in the list. Return 0 if the pseudo is in the list
 int pseudoInList(List *list, char *pseudo)
 {
     if (listIsEmpty(list) == 1)
@@ -139,6 +147,7 @@ int pseudoInList(List *list, char *pseudo)
     }
 }
 
+// get the id from the pseudo
 int getIdByPseudo(List *list, char *pseudo)
 {
     if (listIsEmpty(list) == 1)
@@ -163,6 +172,7 @@ int getIdByPseudo(List *list, char *pseudo)
     }
 }
 
+// get the pseudo from the id
 char *getPseudoById(List *list, int id)
 {
     if (listIsEmpty(list) == 1)
@@ -187,6 +197,7 @@ char *getPseudoById(List *list, int id)
     }
 }
 
+// display the list
 void displayList(List *list)
 {
     if (listIsEmpty(list) == 1)
@@ -204,6 +215,7 @@ void displayList(List *list)
     }
 }
 
+// make a user as an admin
 void setUserAdmin(List* list, int idUser){
     Link* current = list->head;
     while (current != NULL && current->value != idUser){
@@ -214,6 +226,7 @@ void setUserAdmin(List* list, int idUser){
     }
 }
 
+// check if the user is an admin
 int isUserAdmin(List* list, int idUser){
     Link* current = list->head;
     while (current != NULL && current->value != idUser){
@@ -227,6 +240,7 @@ int isUserAdmin(List* list, int idUser){
     }
 }
 
+// get all the users of the list
 char *getAllUsers(List *list, int client)
 {
     Link* current = list->head;
@@ -242,6 +256,7 @@ char *getAllUsers(List *list, int client)
     char *users = (char *)malloc(strlen(start));
     strcpy(users, start);
     
+    // add every client to the final string
     while(current != NULL){
         int taille = 0;
         char *stringUser;

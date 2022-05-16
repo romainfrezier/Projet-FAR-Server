@@ -10,6 +10,7 @@
 
 char* adminKey = "1234";
 
+// generate a random admin key
 void generateAdminKey(char *key)
 {
     for (int i = 0; i < 10; i++)
@@ -19,6 +20,7 @@ void generateAdminKey(char *key)
     }
 }
 
+// remove a user from the chat server
 void kick(char *message, int client)
 {
     if (verifCommand(message, 1) == 1)
@@ -50,6 +52,7 @@ void kick(char *message, int client)
     }
 }
 
+// check the password give by a user
 void adminVerification(char *message, int client)
 {
     if (verifCommand(message, 1) == 1)

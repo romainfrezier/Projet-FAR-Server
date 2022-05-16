@@ -14,6 +14,7 @@
 #include "../headers/fileServer.h"
 #include "../headers/commandServer.h"
 
+// check wich command the user give
 int checkCommand(char *msg, tsr *sock_cli)
 {
     printf("Command detected\n");
@@ -54,7 +55,7 @@ int checkCommand(char *msg, tsr *sock_cli)
     return 0;
 }
 
-// Allows the server to stop
+// Allows the server to stop and stop all the user connected
 void serverQuit(int n)
 {
     // Shutdown of all user sockets
@@ -69,6 +70,7 @@ void serverQuit(int n)
     exit(0);
 }
 
+// send a message of all user of the chat server
 void displayAllUsers(int client)
 {
     sendSpecificMessage(client, getAllUsers(sockets, client));

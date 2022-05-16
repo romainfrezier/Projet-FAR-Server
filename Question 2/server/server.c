@@ -24,7 +24,7 @@ pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
 int dSFileGet;
 int dSFileSend;
 
-// We want to create a send thread and a recption thread for each user
+// We want to create a send thread and a reception thread for each user
 int main(int argc, char *argv[])
 {
   // Definition of the socket array to the desired size
@@ -149,6 +149,7 @@ int main(int argc, char *argv[])
   printf("End program\n");
 }
 
+// Reception of a client message
 void receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;
@@ -241,6 +242,7 @@ void receiveMessage(void *sock_client)
   }
 }
 
+// Sending a message to the client
 void transmitMessage(void *sock_client)
 {
   tss *sock_cli = (tss *)sock_client;
@@ -298,6 +300,7 @@ void sendPrivateMessage(char *msg, int client)
   }
 }
 
+// Send a specific message to client selected
 void sendSpecificMessage(int client, char *message)
 {
   u_long sizeMessage = strlen(message) + 1;

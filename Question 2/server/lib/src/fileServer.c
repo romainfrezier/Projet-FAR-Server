@@ -13,6 +13,7 @@
 
 #define SIZE 1024
 
+// connect socket for get file
 void fileGetThreadFunc(void* arg)
 {
   int socket = *((int *)arg);
@@ -23,7 +24,6 @@ void fileGetThreadFunc(void* arg)
     socklen_t lgFile = sizeof(struct sockaddr_in);
     int acceptation = accept(socket, (struct sockaddr *)&aCfile, &lgFile);
 
-    // ------------- Recevoir la taille d'une struct, une struct, puis filename -------------
     // Size reception
     int size;
     if (recv(acceptation, &size, sizeof(int), 0) == -1)
@@ -47,7 +47,6 @@ void fileGetThreadFunc(void* arg)
       redErrorMessage("Error filename received\n");
     }
     blueMessage("Filename received\n");
-    // --------------------------------------------------------------------------------------
 
     receiveFile(fileInfo, acceptation, filename);
     }
@@ -57,6 +56,7 @@ void fileGetThreadFunc(void* arg)
   shutdown(socket, 2);
 }
 
+// prepare the receiving of the file
 void receiveFile(fileStruct *fileInfo, int client, char *filename)
 {
   fileStruct *file = fileInfo;
@@ -70,6 +70,7 @@ void receiveFile(fileStruct *fileInfo, int client, char *filename)
   shutdown(client, 2);
 }
 
+// receive the file from the user
 void fileTransferReception(void *receiveFileData)
 {
   trf *data = (trf *)receiveFileData;
@@ -115,6 +116,7 @@ void fileTransferReception(void *receiveFileData)
   fclose(fprecv);
 }
 
+// list the file of the server
 char *listFile(char *folder)
 {
   DIR *d;
@@ -142,6 +144,7 @@ char *listFile(char *folder)
   return finalString;
 }
 
+// connect socket for send file
 void fileSendThreadFunc(void* arg)
 {
   int socket = *((int *)arg);
@@ -152,7 +155,6 @@ void fileSendThreadFunc(void* arg)
     socklen_t lgFile = sizeof(struct sockaddr_in);
     int acceptation = accept(socket, (struct sockaddr *)&aCfile, &lgFile);
 
-    // ------------- get filename  -------------
     // Size reception
     u_long size;
     if (recv(acceptation, &size, sizeof(u_long), 0) == -1)
@@ -169,23 +171,21 @@ void fileSendThreadFunc(void* arg)
     }
     blueMessage("Filename received\n");
 
-    // --------------------------------------------------------------------------------------
-
     sendFileStruct* data = (sendFileStruct*)malloc(sizeof(sendFileStruct));
     data->filename = filename;
     data->client = acceptation;
 
-
-
     pthread_t sendFileThread;
     pthread_create(&sendFileThread, NULL, prepareSendingFile, data);
-    }
+  }
 
   free(arg);
+
   // File thread shutdown
   shutdown(socket, 2);
 }
 
+// prepare the sending of the file
 void prepareSendingFile(void* data){
 
   sendFileStruct* dataSend = (sendFileStruct*)data;
@@ -212,8 +212,6 @@ void prepareSendingFile(void* data){
       rewind(fp);                // Jump back to the beginning of the file
       fclose(fp);
 
-      // ------------------------ Send fileStruct and filename --------------------------
-
       // fill the struct
       fileStruct *file = (fileStruct *)malloc(sizeof(fileStruct));
       file->filenameSize = filenameSize;
@@ -225,24 +223,23 @@ void prepareSendingFile(void* data){
           redErrorMessage("Error in sending struct size\n");
       }
 
-
       if (send(dataSend->client, file, structSize, 0) == -1) // send the struct
       {
           redErrorMessage("Error in sending struct size\n");
       }
-      /* en commentaire car le client a déjà le nom sauf s'il le selectionne par un id
 
+      /* in comment because the client already has the name unless he selects it by an ID
       if (send(dataSend->client, dataSend->filename, file->filenameSize, 0) == -1) // send the filename
       {
           redErrorMessage("Error in sending filename\n");
       }
-
       */
-      // --------------------------------------------------------------------------------
+
       sendFile(dataSend->client, file, dataSend->filename);
   }
 }
 
+// transfer the file to the user
 void sendFile(int client, fileStruct* file, char* name){
   
   FILE *fp;

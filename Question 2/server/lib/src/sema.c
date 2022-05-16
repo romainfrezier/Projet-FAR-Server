@@ -6,6 +6,7 @@
 
 #include "../headers/sema.h"
 
+// initialize a semaphore
 void rk_sema_init(struct rk_sema *s, u_int32_t value)
 {
 #ifdef __APPLE__
@@ -17,6 +18,7 @@ void rk_sema_init(struct rk_sema *s, u_int32_t value)
 #endif
 }
 
+// wait a semaphore
 void rk_sema_wait(struct rk_sema *s)
 {
 #ifdef __APPLE__
@@ -30,6 +32,7 @@ void rk_sema_wait(struct rk_sema *s)
 #endif
 }
 
+// post a semaphore
 void rk_sema_post(struct rk_sema *s)
 {
 #ifdef __APPLE__
@@ -39,6 +42,7 @@ void rk_sema_post(struct rk_sema *s)
 #endif
 }
 
+// destroy a semephore
 void rk_sema_destroy(struct rk_sema *s)
 {
 #ifdef __APPLE__
