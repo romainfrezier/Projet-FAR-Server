@@ -28,6 +28,5 @@ extern List *sockets;
 void receiveMessage(void *sock_client);  // Reception of a client message
 void transmitMessage(void* sock_client); // Sending a message to the client
 void sendPrivateMessage(char *msg, int client); // Allows sending a private message
-void sendSpecificMessage(int client, char *message); // Send a specific message to client selected
 
 #endif // SERVER_H_

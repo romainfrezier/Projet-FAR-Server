@@ -305,19 +305,3 @@ void sendPrivateMessage(char *msg, int client)
     sendSpecificMessage(client, "The command is : [/pm targetPseudo yourMessage] \n");
   }
 }
-
-// Send a specific message to client selected
-void sendSpecificMessage(int client, char *message)
-{
-  u_long sizeMessage = strlen(message) + 1;
-  // Send connection message size
-  if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
-  {
-    redErrorMessage("Error sending size\n");
-  }
-  // Send connection message
-  if (send(client, message, sizeMessage, 0) == -1)
-  {
-    redErrorMessage("Error sending connection message\n");
-  }
-}

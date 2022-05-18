@@ -7,6 +7,7 @@
 #include "../headers/list.h"
 #include "../headers/server.h"
 #include "../headers/stringFunc.h"
+#include "../headers/commandServer.h"
 
 char* adminKey = "1234";
 

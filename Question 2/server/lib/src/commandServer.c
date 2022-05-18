@@ -16,6 +16,22 @@
 #include "../headers/commandServer.h"
 #include "../headers/stringFunc.h"
 
+// Send a specific message to client selected
+void sendSpecificMessage(int client, char *message)
+{
+    u_long sizeMessage = strlen(message) + 1;
+    // Send connection message size
+    if (send(client, &sizeMessage, sizeof(u_long), 0) == -1)
+    {
+        redErrorMessage("Error sending size\n");
+    }
+    // Send connection message
+    if (send(client, message, sizeMessage, 0) == -1)
+    {
+        redErrorMessage("Error sending connection message\n");
+    }
+}
+
 // check wich command the user give
 int checkCommand(char *msg, tsr *sock_cli)
 {
