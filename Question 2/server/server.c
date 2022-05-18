@@ -207,9 +207,15 @@ void receiveMessage(void *sock_client)
     }
     blueMessage("Message received\n");
 
-    // Commands management here
-    if (msg[0] == '/')
+    int censorship = checkCensorship(msg);
+
+    if (censorship != 0)
     {
+      sendSpecificMessage((*sock_cli).client, "\033[0;31m\nDon't insult! Your message has not been sent...\n");
+    }
+    else if (msg[0] == '/')
+    {
+      // Commands management here
       int checkCmd = checkCommand(msg, sock_cli);
       if (checkCmd == -1)
       {

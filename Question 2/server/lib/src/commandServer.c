@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <regex.h>
 
 #include "../headers/list.h"
 #include "../headers/server.h"
@@ -85,4 +86,45 @@ void userQuit(int socket)
     shutdown(socket, 2);
     rk_sema_post(&sem);
     printf("User %d has been stopped\n", socket);
+}
+
+// Check if a message contains insult. Return 0 if there is no insult
+int checkCensorship(char* message){
+    FILE *fp = fopen("lib/censorship_words.txt", "r");
+    if (fp == NULL)
+    {
+        redErrorMessage("Error opening censor file...\n");
+    }
+    char *start = "^.*(";
+    char *model = (char *)malloc(strlen(start));
+    strcat(model, start);
+    char *line = NULL;
+    size_t len = 0;
+
+    while (getline(&line, &len, fp) != -1)
+    {
+        char *word = strtok(line, "\n");
+        model = realloc(model, strlen(model) + strlen(word) + strlen("(|)"));
+        strcat(model, "(");
+        strcat(model, word);
+        strcat(model, ")|");
+    }
+    model[strlen(model) - 1] = ')';
+    char *end = ".*$";
+    model = realloc(model, strlen(model) + strlen(end));
+    strcat(model, end);
+    fclose(fp);
+    free(line);
+
+    regex_t regex;
+    int regexRes;
+    regexRes = regcomp(&regex, model, REG_EXTENDED);
+    regexRes = regexec(&regex, message, 0, NULL, 0);
+    if (regexRes == 0)
+    {
+        return 1;
+    }
+    else{
+        return 0;
+    }
 }
