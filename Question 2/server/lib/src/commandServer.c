@@ -14,6 +14,7 @@
 #include "../headers/colors.h"
 #include "../headers/fileServer.h"
 #include "../headers/commandServer.h"
+#include "../headers/stringFunc.h"
 
 // check wich command the user give
 int checkCommand(char *msg, tsr *sock_cli)
@@ -46,6 +47,11 @@ int checkCommand(char *msg, tsr *sock_cli)
     {
         printf("Go to displayUsers function \n");
         displayAllUsers((*sock_cli).client);
+    }
+    else if (strcmp(strto, "/rename") == 0)
+    {
+        printf("Go to rename function \n");
+        renameUser(msg, (*sock_cli).client);
     }
     else if (strcmp(strto, "/files") == 0)
     {
@@ -126,5 +132,18 @@ int checkCensorship(char* message){
     }
     else{
         return 0;
+    }
+}
+
+void renameUser(char* msg, int client){
+    char **mess = str_split(msg, 2);
+    char *newPseudo = mess[1];
+    if (pseudoInList(sockets, newPseudo) == 0)
+    {
+        sendSpecificMessage(client, "Username already used !\nPlease choose another username");
+    }
+    else 
+    {
+        setPseudo(sockets, client, newPseudo);
     }
 }

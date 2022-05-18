@@ -300,3 +300,15 @@ char *getAllUsers(List *list, int client)
     }
     return users;
 }
+
+void setPseudo(List *list, int client, char *pseudo){
+    Link *current = list->head;
+    while (current != NULL && current->value != client)
+    {
+        current = current->next;
+    }
+    if (current->value == client)
+    {
+        current->pseudo = pseudo;
+    }
+}
