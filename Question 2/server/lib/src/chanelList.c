@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "chanelList.h"
-#include "List.h"
+
+#include "../headers/chanel.h"
+#include "../headers/list.h"
 
 ChanelList* createChanelList(int size){
     ChanelList* newChanelList = (ChanelList*)malloc(sizeof(ChanelList));
@@ -10,15 +11,6 @@ ChanelList* createChanelList(int size){
     return newChanelList;
 }
 
-
-Chanel* createChanel(char* name, int port){
-    Chanel* newChanel = (Chanel*)malloc(sizeof(Chanel));
-    List* sockets = (List*)malloc(sizeof(List));
-    newChanel->name = name;
-    newChanel->port = port;
-    newChanel->clients = sockets;
-    return newChanel;
-}
 
 // check if the list is empty. Return 0 if the list is empty
 int chanelListIsEmpty(ChanelList* list)
@@ -34,7 +26,7 @@ int chanelListIsEmpty(ChanelList* list)
 }
 
 // add a user to the first position of the list
-void addFirst(ChanelList* list, Chanel* chanel)
+void addFirstChanel(ChanelList* list, Chanel* chanel)
 {
     if (list->size == 0)
     {
@@ -55,3 +47,5 @@ void addFirst(ChanelList* list, Chanel* chanel)
         list->size = list->size - 1;
     }
 }
+
+

@@ -25,13 +25,13 @@ void generateAdminKey(char *key)
 // remove a user from the chat server
 void kick(char *message, int client, List* sockets)
 {
-    if (verifCommand(message, 1) == 1)
+    if (countSpaceCommand(message, 1) == 1)
     {
         if (isUserAdmin(sockets, client) == 1)
         {
             char **mess = str_split(message, 2);
             int idKickedClient = getIdByPseudo(sockets, mess[1]);
-            if (idKickedClient != NULL)
+            if (idKickedClient != -1)
             {
                 sendSpecificMessage(idKickedClient, "You have been kicked by an admin !\n");
                 printf("User %d has been kicked by admin %d \n", idKickedClient, client);
@@ -57,7 +57,7 @@ void kick(char *message, int client, List* sockets)
 // check the password give by a user
 void adminVerification(char *message, int client, List* sockets)
 {
-    if (verifCommand(message, 1) == 1)
+    if (countSpaceCommand(message, 1) == 1)
     {
         char **mess = str_split(message, 2);
         if (strcmp(adminKey, mess[1]) == 0)

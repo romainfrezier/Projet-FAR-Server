@@ -7,11 +7,12 @@
 #include <pthread.h>
 #include <regex.h>
 
-#include "../headers/commandServer.h"
 #include "../headers/chanel.h"
 #include "../headers/list.h"
 #include "../headers/admin.h"
+#include "../headers/server.h"
 #include "../headers/sema.h"
+#include "../headers/commandServer.h"
 #include "../headers/colors.h"
 #include "../headers/fileServer.h"
 #include "../headers/stringFunc.h"
@@ -32,7 +33,7 @@ void sendSpecificMessage(int client, char *message)
     }
 }
 
-// check wich command the user give
+// check which command the user give
 int checkCommand(char *msg, tsr *sock_cli, rk_sema sem)
 {
     printf("Command detected\n");
@@ -41,7 +42,7 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem)
     char *strto = strtok(copyMessage, " ");
     if (strcmp(msg, "/quit") == 0)
     {
-        userQuit((*sock_cli).client, (*sock_cli).clients, sem);
+        userQuit((*sock_cli).client, (*sock_cli).clients, sem, (*sock_cli).mutex);
         return -1;
     }
     else if (strcmp(strto, "/pm") == 0)
@@ -75,18 +76,37 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem)
         char *list = listFile("./serverStorage");
         sendSpecificMessage((*sock_cli).client, list);
     }
+    else if (strcmp(strto, "/chanel") == 0)
+    {
+        printf("Go to create chanel func ! \n");
+        pthread_t createChanelThread;
+        pthread_create(&createChanelThread, NULL, createNewChanel, msg);
+    }
     return 0;
 }
 
+void createNewChanel(char *cmd)
+{
+    if (countSpaceCommand(cmd, 1) == 1)
+    {
+        char **msg = str_split(cmd, 1);
+        prepareGenerateChanel(msg[1]);
+    }
+    else
+    {
+        printf("/chanel chanelName ! \n");
+    }
+}
+
 // Allows the server to stop and stop all the user connected
-void serverQuit(int n, List *sockets, rk_sema sem)
+void serverQuit(int n, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
 {
     // Shutdown of all user sockets
     Link *current = sockets->head;
     while (current != NULL)
     {
         Link *next = current->next;
-        userQuit(current->value, sockets,sem);
+        userQuit(current->value, sockets, sem, mutexList);
         current = next;
     }
     redErrorMessage("\nThe server has been stopped !\n");
@@ -100,7 +120,7 @@ void displayAllUsers(int client, List *sockets)
 }
 
 // Allows a user to leave the server
-void userQuit(int socket, List *sockets, rk_sema sem)
+void userQuit(int socket, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
 {
     pthread_mutex_lock(&mutexList);
     delVal(sockets, socket);
@@ -170,7 +190,7 @@ void renameUser(char *msg, int client, List *sockets)
 // Allows sending a private message
 void sendPrivateMessage(char *msg, int client, List *sockets)
 {
-    if (verifCommand(msg, 2) == 1)
+    if (countSpaceCommand(msg, 2) == 1)
     {
         char **mess = str_split(msg, 3);
         char *cmd = (char *)malloc(strlen(mess[0]));

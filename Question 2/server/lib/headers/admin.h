@@ -1,6 +1,8 @@
 #ifndef ADMIN_H_ /* Include guard */
 #define ADMIN_H_
 
+#include "list.h"
+
 extern char *adminKey;
 
 void generateAdminKey(char *key);                   // generate a random admin key

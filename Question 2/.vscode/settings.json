@@ -29,6 +29,8 @@
         "queue": "c",
         "random": "c",
         "unordered_map": "c",
-        "utility": "c"
+        "utility": "c",
+        "chanellist.h": "c",
+        "chanel.h": "c"
     }
 }

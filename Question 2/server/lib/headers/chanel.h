@@ -1,32 +1,39 @@
 #ifndef CHANEL_H_ /* Include guard */
 #define CHANEL_H_
 
+#include <pthread.h>
 #include "list.h"
 
-extern struct rk_sema sem;
-extern pthread_mutex_t mutexList;
-extern int dS;
+typedef struct Chanel Chanel;
 
-typedef struct thread_sockets_receive tsr;
-
-struct thread_sockets_receive
-{
-    int client;
-    List *clients;
-    rk_sema sem;
+struct Chanel {
+    int port;
+    char* name;
+    List* clients;
+    Chanel* next;
+    pthread_t thread;
 };
 
-typedef struct thread_sockets_send tss;
+typedef struct ChanelList ChanelList;
 
-struct thread_sockets_send
+struct ChanelList
 {
+    Chanel *head;
     int size;
-    char *message;
-    int client;
-    char *pseudoSender;
 };
 
-void generateChanel(void *chanel_struct);
-void receiveMessage(void *sock_client);
+typedef struct ChanelStruct ChanelStruct;
+
+struct ChanelStruct {
+    ChanelList* chanelList;
+    int port;
+    char* name;
+    pthread_t thread;
+};
+
+ChanelList *createChanelList(int size);
+void addFirstChanel(ChanelList *list, Chanel *chanel);
+int chanelListIsEmpty(ChanelList *list);
+Chanel* createChanel(char* name, int port, pthread_t thread);
 
 #endif // CHANEL_H_
