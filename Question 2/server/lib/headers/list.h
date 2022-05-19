@@ -1,3 +1,6 @@
+#ifndef LIST_H_ /* Include guard */
+#define LIST_H_
+
 typedef struct Link Link;
 
 struct Link {
@@ -29,3 +32,5 @@ void setUserAdmin(List* list, int idClient);        // make a user as an admin
 int isUserAdmin(List *list, int idClient);          // check if the user is an admin
 char *getAllUsers(List *list, int client);          // get all the users of the list
 void setPseudo(List *list, int client, char* pseudo);// get all the users of the list
+
+#endif // LIST_H_

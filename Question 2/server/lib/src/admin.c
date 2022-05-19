@@ -6,7 +6,7 @@
 
 #include "../headers/admin.h"
 #include "../headers/list.h"
-#include "../headers/server.h"
+#include "../headers/chanel.h"
 #include "../headers/stringFunc.h"
 #include "../headers/commandServer.h"
 
@@ -23,7 +23,7 @@ void generateAdminKey(char *key)
 }
 
 // remove a user from the chat server
-void kick(char *message, int client)
+void kick(char *message, int client, List* sockets)
 {
     if (verifCommand(message, 1) == 1)
     {
@@ -55,7 +55,7 @@ void kick(char *message, int client)
 }
 
 // check the password give by a user
-void adminVerification(char *message, int client)
+void adminVerification(char *message, int client, List* sockets)
 {
     if (verifCommand(message, 1) == 1)
     {

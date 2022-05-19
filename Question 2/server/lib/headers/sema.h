@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-
+typedef struct rk_sema rk_sema;
 struct rk_sema
 {
 #ifdef __APPLE__

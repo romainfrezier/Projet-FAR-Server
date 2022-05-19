@@ -1,12 +1,14 @@
 #ifndef COMMANDSERVER_H_ /* Include guard */
 #define COMMANDSERVER_H_
 
-void sendSpecificMessage(int client, char *message); // Send a specific message to client selected
-int checkCommand(char *msg, tsr *sock_cli);          // check wich command the user give
-void serverQuit(int n);                              // Allows the server to stop and stop all the user connected
-void userQuit(int socket);                           // Allows a user to leave the server
-void displayAllUsers(int client);                    // send a message of all user of the chat server
-int checkCensorship(char *message);                  // Check if a message contains insult. Return 0 if there is no insult
-void renameUser(char *msg, int client);              // change user username
+void sendSpecificMessage(int client, char *message);   // Send a specific message to client selected
+int checkCommand(char *msg, tsr *sock_cli, rk_sema sem);            // check wich command the user give
+void serverQuit(int n, List *sockets, rk_sema sem);                   // Allows the server to stop and stop all the user connected
+void userQuit(int socket, List *sockets, rk_sema sem);                // Allows a user to leave the server
+void displayAllUsers(int client, List *sockets);       // send a message of all user of the chat server
+int checkCensorship(char *message);                    // Check if a message contains insult. Return 0 if there is no insult
+void renameUser(char *msg, int client, List *sockets); // change user username
+void sendPrivateMessage(char *msg, int client, List *sockets);
+void transmitMessage(void *sock_client);
 
 #endif // COMMANDSERVER_H_
