@@ -6,7 +6,6 @@
 
 #include "../headers/admin.h"
 #include "../headers/list.h"
-#include "../headers/chanel.h"
 #include "../headers/stringFunc.h"
 #include "../headers/commandServer.h"
 

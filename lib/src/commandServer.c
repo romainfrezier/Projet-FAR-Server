@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <regex.h>
 
-#include "../headers/chanel.h"
+#include "../headers/channel.h"
 #include "../headers/list.h"
 #include "../headers/admin.h"
 #include "../headers/server.h"
@@ -34,7 +34,7 @@ void sendSpecificMessage(int client, char *message)
 }
 
 // check which command the user give
-int checkCommand(char *msg, tsr *sock_cli, rk_sema sem)
+int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList* channelList)
 {
     printf("Command detected\n");
     char *copyMessage = (char *)malloc(strlen(msg) + 1);
@@ -73,33 +73,44 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem)
     else if (strcmp(strto, "/files") == 0)
     {
         printf("Go to list file function \n");
-        char *list = listFile("./serverStorage");
-        sendSpecificMessage((*sock_cli).client, list);
+        sendSpecificMessage((*sock_cli).client, listFile("./serverStorage"));
     }
-    else if (strcmp(strto, "/chanel") == 0)
+    else if (strcmp(strto, "/lchannel") == 0)
     {
-        printf("Go to create chanel func ! \n");
-        pthread_t createChanelThread;
-        pthread_create(&createChanelThread, NULL, createNewChanel, msg);
+        printf("Go to list channel function \n");
+        sendSpecificMessage((*sock_cli).client, listChannel(channelList));
+    }
+    else if (strcmp(strto, "/channel") == 0)
+    {
+        if (isUserAdmin((*sock_cli).clients, (*sock_cli).client) == 1)
+        {
+            printf("Go to create channel func ! \n");
+            pthread_t createChannelThread;
+            pthread_create(&createChannelThread, NULL, createNewChannel, msg);
+        }
+        else
+        {
+            sendSpecificMessage((*sock_cli).client, "You can't create a channel if your are not an admin");
+        }
     }
     return 0;
 }
 
-void createNewChanel(char *cmd)
+void createNewChannel(char *cmd)
 {
     if (countSpaceCommand(cmd, 1) == 1)
-    {
+    {   
         char **msg = str_split(cmd, 1);
-        prepareGenerateChanel(msg[1]);
+        prepareGenerateChannel(msg[1]);
     }
     else
     {
-        printf("/chanel chanelName ! \n");
+        printf("/channel channelName ! \n");
     }
 }
 
 // Allows the server to stop and stop all the user connected
-void serverQuit(int n, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
+void channelQuit(int n, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
 {
     // Shutdown of all user sockets
     Link *current = sockets->head;

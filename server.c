@@ -13,55 +13,55 @@
 #include "lib/headers/colors.h"
 #include "lib/headers/commandServer.h"
 #include "lib/headers/fileServer.h"
-#include "lib/headers/chanel.h"
+#include "lib/headers/channel.h"
 #include "lib/headers/list.h"
 
-ChanelList *chanelList;
-int maxChanel = 10;
+ChannelList *channelList;
+int maxChannel = 10;
 unsigned int MAX_CONNECTION = 3;
 int defaultPort = 4000;
-int chanelCount = 0;
+int channelCount = 0;
 
 // We want to create a send thread and a reception thread for each user
 int main(int argc, char *argv[])
 {
-  chanelList = createChanelList(maxChanel);
-  prepareGenerateChanel("Welcome");
+  channelList = createChannelList(maxChannel);
+  prepareGenerateChannel("Welcome");
   // Server shutdown
   // free(adminKey);
   printf("End program\n");
 }
 
-void prepareGenerateChanel(char *name)
+void prepareGenerateChannel(char *name)
 {
-  ChanelStruct *chanelData = (ChanelStruct *)malloc(sizeof(ChanelStruct));
-  chanelData->port = (defaultPort + (chanelCount * 5));
-  chanelData->name = name;
-  chanelData->chanelList = chanelList;
-  pthread_t chanelThread;
-  chanelData->thread = chanelThread;
-  pthread_create(&chanelThread, NULL, generateChanel, chanelData);
-  chanelCount += 1;
-  pthread_join(chanelThread, NULL);
+  Channel *channelData = (Channel *)malloc(sizeof(Channel));
+  channelData->port = (defaultPort + (channelCount * 5));
+  channelData->name = name;
+  channelData->channelList = channelList;
+  pthread_t channelThread;
+  channelData->thread = channelThread;
+  pthread_create(&channelThread, NULL, generateChannel, channelData);
+  channelCount += 1;
+  pthread_join(channelThread, NULL);
 }
 
-void generateChanel(void *chanel_struct)
+void generateChannel(void *channel)
 {
   rk_sema sem;
   int dSFileGet;
   int dSFileSend;
   pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
-  ChanelStruct *chanelData = (ChanelStruct *)chanel_struct;
-  Chanel *chanel = createChanel(chanelData->name, chanelData->port, chanelData->thread);
-  addFirstChanel(chanelList, chanel);
+  Channel *channelData = (Channel *)channel;
+  Channel *channelCreated = createChannel(channelData->name, channelData->port, channelData->thread);
+  addLastChannel(channelList, channelCreated);
 
-  int port = (*chanelData).port;
-  List *sockets = (*chanel).clients;
+  int port = (*channelData).port;
+  List *sockets = (*channelData).clients;
   // Definition of the socket array to the desired size
   sockets = createList(MAX_CONNECTION);
   rk_sema_init(&sem, MAX_CONNECTION);
 
-  printf("Start chanel\n");
+  printf("Start channel\n");
 
   int enable = 1;
 
@@ -128,7 +128,7 @@ void generateChanel(void *chanel_struct)
   printf("\n");
   struct sockaddr_in aC;
   socklen_t lg = sizeof(struct sockaddr_in);
-  signal(SIGINT, serverQuit);
+  signal(SIGINT, channelQuit);
 
   pthread_t fileGetThread;
   int *argGet = malloc(sizeof(int));
@@ -235,7 +235,7 @@ void receiveMessage(void *sock_client)
     else if (msg[0] == '/')
     {
       // Commands management here
-      int checkCmd = checkCommand(msg, sock_cli, (*sock_cli).sem);
+      int checkCmd = checkCommand(msg, sock_cli, (*sock_cli).sem, channelList);
       if (checkCmd == -1)
       {
         break;
