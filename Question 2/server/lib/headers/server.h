@@ -1,8 +1,6 @@
 #ifndef SERVER_H_ /* Include guard */
 #define SERVER_H_
 
-#include <pthread.h>
-
 typedef struct thread_sockets_receive tsr;
 
 struct thread_sockets_receive

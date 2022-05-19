@@ -163,12 +163,12 @@ int getIdByPseudo(List *list, char *pseudo)
         }
         else
         {
-            return NULL;
+            return -1;
         }
     }
     else
     {
-        return NULL;
+        return -1;
     }
 }
 

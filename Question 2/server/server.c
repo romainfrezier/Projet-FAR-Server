@@ -278,7 +278,7 @@ void sendPrivateMessage(char *msg, int client)
     cmd = mess[0];
     char *target = mess[1];
     int id = getIdByPseudo(sockets, target);
-    if (id != NULL)
+    if (id != -1)
     {
       char *pseudo = getPseudoById(sockets, client);
       char *pmPseudo = (char *)malloc(sizeof(char) * (strlen(pseudo) + strlen("(pm) ")));
