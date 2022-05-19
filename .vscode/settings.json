@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "stringfunc.h": "c",
-        "pthread.h": "c",
-        "__locale": "c",
-        "locale": "c"
-    }
-}
