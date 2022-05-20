@@ -9,6 +9,8 @@ struct sendFileStruct
 {
     int client;
     char *filename;
+    char *path;
+    long fileSize;
 };
 
 struct fileStruct

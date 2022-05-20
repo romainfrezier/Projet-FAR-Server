@@ -10,6 +10,7 @@
 
 #include "../headers/fileServer.h"
 #include "../headers/colors.h"
+#include "../headers/commandServer.h"
 
 #define SIZE 1024
 
@@ -129,7 +130,7 @@ char *listFile(char *folder)
   {
     while ((dir = readdir(d)) != NULL)
     {
-      if ((strcmp(dir->d_name, ".") != 0) && (strcmp(dir->d_name, "..") != 0))
+      if ((strcmp(dir->d_name, ".") != 0) && (strcmp(dir->d_name, "..") != 0) && (strcmp(dir->d_name, ".DS_Store") != 0))
       {
         char *filename = (char *)malloc((strlen(dir->d_name)) * sizeof(char) + strlen("\n") + strlen("  - "));
         strcat(filename, "  - ");
@@ -147,6 +148,7 @@ char *listFile(char *folder)
 // connect socket for send file
 void fileSendThreadFunc(void* arg)
 {
+  FILE *fp;
   int socket = *((int *)arg);
 
   while (1)
@@ -161,7 +163,7 @@ void fileSendThreadFunc(void* arg)
     {
       redErrorMessage("Error filename size received\n");
     }
-    blueMessage("filename size received\n");
+    blueMessage("Filename size received\n");
 
     // filename reception
     char *filename = (char*)malloc(size*sizeof(char));
@@ -171,12 +173,45 @@ void fileSendThreadFunc(void* arg)
     }
     blueMessage("Filename received\n");
 
-    sendFileStruct* data = (sendFileStruct*)malloc(sizeof(sendFileStruct));
-    data->filename = filename;
-    data->client = acceptation;
+    // get file path
+    char *folder = "serverStorage/";
+    char *path = (char *)malloc((strlen(folder) + size) * sizeof(char));
+    strcat(path, folder);
+    strcat(path, filename);
 
-    pthread_t sendFileThread;
-    pthread_create(&sendFileThread, NULL, prepareSendingFile, data);
+    fp = fopen(path, "rb");
+    if (fp == NULL)
+    {
+      redMessage("The file doesn't exist !\n");
+      sendSpecificMessage(acceptation, "The file doesn't exist !");
+      // send something to the user
+    }
+    else
+    {
+      sendSpecificMessage(acceptation, "The file exist !");
+      
+      fseek(fp, 0, SEEK_END);    // Jump to the end of the file
+      long fileSize = ftell(fp); // Get the current byte offset in the file
+      rewind(fp);                // Jump back to the beginning of the file
+      fclose(fp);
+
+      if (fileSize > 100000000)
+      {
+        sendSpecificMessage(acceptation, "You cannot send a file over 100MB");
+      }
+      else
+      {
+        sendSpecificMessage(acceptation, "File transfer is accepted");
+        sendFileStruct *data = (sendFileStruct *)malloc(sizeof(sendFileStruct));
+        data->filename = filename;
+        data->client = acceptation;
+        data->path = path;
+        data->fileSize = fileSize;
+
+        pthread_t sendFileThread;
+        pthread_create(&sendFileThread, NULL, prepareSendingFile, data);
+      }
+    }
   }
 
   free(arg);
@@ -192,35 +227,23 @@ void prepareSendingFile(void* data){
   FILE *fp;
   size_t filenameSize = strlen(dataSend->filename);
 
-  // get file path
-  char *folder = "serverStorage/";
-  char *path = (char *)malloc((strlen(folder) + filenameSize) * sizeof(char));
-  strcat(path, folder);
-  strcat(path, dataSend->filename);
-
   // get the file size
-  fp = fopen(path, "rb");
+  fp = fopen(dataSend->path, "rb");
   if (fp == NULL)
   {
       redMessage("The file doesn't exist !\n");
-      //send something to the user
   }
   else
   {
-      fseek(fp, 0, SEEK_END);    // Jump to the end of the file
-      long fileSize = ftell(fp); // Get the current byte offset in the file
-      rewind(fp);                // Jump back to the beginning of the file
-      fclose(fp);
+    // fill the struct
+    fileStruct *file = (fileStruct *)malloc(sizeof(fileStruct));
+    file->filenameSize = filenameSize;
+    file->fileSize = dataSend->fileSize;
 
-      // fill the struct
-      fileStruct *file = (fileStruct *)malloc(sizeof(fileStruct));
-      file->filenameSize = filenameSize;
-      file->fileSize = fileSize;
-
-      int structSize = sizeof(*file);
-      if (send(dataSend->client, &structSize, sizeof(int), 0) == -1) // send the size of the struct
-      {
-          redErrorMessage("Error in sending struct size\n");
+    int structSize = sizeof(*file);
+    if (send(dataSend->client, &structSize, sizeof(int), 0) == -1) // send the size of the struct
+    {
+      redErrorMessage("Error in sending struct size\n");
       }
 
       if (send(dataSend->client, file, structSize, 0) == -1) // send the struct
