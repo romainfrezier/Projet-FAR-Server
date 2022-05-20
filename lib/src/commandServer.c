@@ -34,7 +34,7 @@ void sendSpecificMessage(int client, char *message)
 }
 
 // check which command the user give
-int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList* channelList)
+int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList)
 {
     printf("Command detected\n");
     char *copyMessage = (char *)malloc(strlen(msg) + 1);
@@ -82,24 +82,41 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList* channelList
     }
     else if (strcmp(strto, "/channel") == 0)
     {
-        if (isUserAdmin((*sock_cli).clients, (*sock_cli).client) == 1)
+        printf("Go to create channel function");
+        checkChannel((*sock_cli).clients, (*sock_cli).client, channelList->freePlaces, msg);
+    }
+    else if (strcmp(strto, "/jchannel") == 0)
+    {
+        printf("Go to join channel function");
+    }
+    return 0;
+}
+
+void checkChannel(List* clients, int client, int freePlaces, char* message)
+{
+    if (isUserAdmin(clients, client) == 1)
+    {
+        if (freePlaces == 0)
         {
-            printf("Go to create channel func ! \n");
-            pthread_t createChannelThread;
-            pthread_create(&createChannelThread, NULL, createNewChannel, msg);
+            sendSpecificMessage(client, "The maximum number of channels has been reached.\nYou can no longer add it for the moment.\n");
         }
         else
         {
-            sendSpecificMessage((*sock_cli).client, "You can't create a channel if your are not an admin");
+            printf("Go to create channel func ! \n");
+            pthread_t createChannelThread;
+            pthread_create(&createChannelThread, NULL, createNewChannel, message);
         }
     }
-    return 0;
+    else
+    {
+        sendSpecificMessage(client, "You can't create a channel if your are not an admin");
+    }
 }
 
 void createNewChannel(char *cmd)
 {
     if (countSpaceCommand(cmd, 1) == 1)
-    {   
+    {
         char **msg = str_split(cmd, 1);
         prepareGenerateChannel(msg[1]);
     }

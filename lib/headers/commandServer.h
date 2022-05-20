@@ -15,5 +15,6 @@ void renameUser(char *msg, int client, List *sockets);                        //
 void sendPrivateMessage(char *msg, int client, List *sockets);
 void transmitMessage(void *sock_client);
 void createNewChannel(char *cmd);
+void checkChannel(List *clients, int client, int freePlaces, char *message);
 
 #endif // COMMANDSERVER_H_
