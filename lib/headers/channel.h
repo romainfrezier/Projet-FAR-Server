@@ -20,12 +20,14 @@ struct ChannelList
 {
     Channel *head;
     int freePlaces;
+    int maxPlaces;
 };
 
 ChannelList *createChannelList(int size);
 void addLastChannel(ChannelList *list, Channel *channel);
 int channelListIsEmpty(ChannelList *list);
-Channel* createChannel(char* name, int port, pthread_t thread);
+Channel *createChannel(char *name, int port, pthread_t thread, int size);
 char *listChannel(ChannelList *list);
+Channel *getChannelByIndex(ChannelList *list, int index);
 
 #endif // CHANNEL_H_

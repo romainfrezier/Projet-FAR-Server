@@ -2,7 +2,6 @@
 #include <signal.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
@@ -18,7 +17,7 @@
 
 ChannelList *channelList;
 int maxChannel = 10;
-unsigned int MAX_CONNECTION = 3;
+unsigned int MAX_CONNEXION = 3;
 int defaultPort = 4000;
 int channelCount = 0;
 
@@ -39,27 +38,25 @@ void prepareGenerateChannel(char *name)
   channelData->name = name;
   channelData->channelList = channelList;
   pthread_t channelThread;
-  channelData->thread = channelThread;
   pthread_create(&channelThread, NULL, generateChannel, channelData);
+  channelData->thread = channelThread;
   channelCount += 1;
   pthread_join(channelThread, NULL);
 }
 
-void generateChannel(void *channel)
+void * generateChannel(void *channel)
 {
   rk_sema sem;
   int dSFileGet;
   int dSFileSend;
   pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
   Channel *channelData = (Channel *)channel;
-  Channel *channelCreated = createChannel(channelData->name, channelData->port, channelData->thread);
+  Channel *channelCreated = createChannel(channelData->name, channelData->port, channelData->thread, MAX_CONNEXION);
   addLastChannel(channelList, channelCreated);
 
-  int port = (*channelData).port;
-  List *sockets = (*channelData).clients;
-  // Definition of the socket array to the desired size
-  sockets = createList(MAX_CONNECTION);
-  rk_sema_init(&sem, MAX_CONNECTION);
+  int port = (*channelCreated).port;
+
+  rk_sema_init(&sem, MAX_CONNEXION);
 
   printf("Start channel\n");
 
@@ -118,9 +115,9 @@ void generateChannel(void *channel)
   bind(dSFileSend, (struct sockaddr *)&adFileSend, sizeof(adFileSend));
   printf("File socketGet named\n");
 
-  listen(dS, MAX_CONNECTION);
-  listen(dSFileGet, MAX_CONNECTION);
-  listen(dSFileSend, MAX_CONNECTION);
+  listen(dS, MAX_CONNEXION);
+  listen(dSFileGet, MAX_CONNEXION);
+  listen(dSFileSend, MAX_CONNEXION);
 
   printf("Listening mode on port %d \n", port);
   greenMessage("The admin key is : ");
@@ -149,17 +146,17 @@ void generateChannel(void *channel)
     // and we attributed a reception thread to each
     tsr *receiveData = (tsr *)malloc(sizeof(tsr));
     (*receiveData).client = acceptation;
-    (*receiveData).clients = sockets;
+    (*receiveData).clients = (*channelCreated).clients;
     (*receiveData).sem = sem;
     (*receiveData).mutex = mutexList;
     pthread_t receive;
     pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
   }
   // Shutdown of all user sockets
-  Link *current = sockets->head;
+  Link *current = (*channelCreated).clients->head;
   do
   {
-    delVal(sockets, current->value);
+    delVal((*channelCreated).clients, current->value);
     shutdown(current->value, 2);
     current = current->next;
   } while (current->next != NULL);
@@ -169,10 +166,9 @@ void generateChannel(void *channel)
 }
 
 // Reception of a client message
-void receiveMessage(void *sock_client)
+void * receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;
-  char *msg;
   u_long size;
   char *pseudo;
   int check;
@@ -212,10 +208,17 @@ void receiveMessage(void *sock_client)
   while (1)
   {
     // Size reception
-    if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
+    int receive = recv((*sock_cli).client, &size, sizeof(u_long), 0);
+    if (receive == -1)
     {
       redErrorMessage("Error message size received\n");
     }
+    else if (receive == 0)
+    {
+      redMessage("Connexion lost\n");
+      break;
+    }
+
     blueMessage("Size received\n");
 
     // Message reception
@@ -247,7 +250,7 @@ void receiveMessage(void *sock_client)
       pthread_t send;
       Link *current = sock_cli->clients->head;
       displayList(sock_cli->clients);
-      for (int i = 0; i < MAX_CONNECTION - sock_cli->clients->size; i++)
+      for (int i = 0; i < MAX_CONNEXION - sock_cli->clients->size; i++)
       {
         if (current->value != (*sock_cli).client)
         {
@@ -265,4 +268,5 @@ void receiveMessage(void *sock_client)
     }
     // free(msg);
   }
+  return NULL;
 }

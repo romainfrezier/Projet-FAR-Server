@@ -15,7 +15,7 @@
 #define SIZE 1024
 
 // connect socket for get file
-void fileGetThreadFunc(void* arg)
+void * fileGetThreadFunc(void* arg)
 {
   int socket = *((int *)arg);
 
@@ -72,7 +72,7 @@ void receiveFile(fileStruct *fileInfo, int client, char *filename)
 }
 
 // receive the file from the user
-void fileTransferReception(void *receiveFileData)
+void* fileTransferReception(void *receiveFileData)
 {
   trf *data = (trf *)receiveFileData;
   char *filename = data->fileName;
@@ -115,6 +115,7 @@ void fileTransferReception(void *receiveFileData)
   greenMessage(path);
   printf("\n");
   fclose(fprecv);
+    return NULL;
 }
 
 // list the file of the server
@@ -146,7 +147,7 @@ char *listFile(char *folder)
 }
 
 // connect socket for send file
-void fileSendThreadFunc(void* arg)
+void * fileSendThreadFunc(void* arg)
 {
   FILE *fp;
   int socket = *((int *)arg);
@@ -184,7 +185,6 @@ void fileSendThreadFunc(void* arg)
     {
       redMessage("The file doesn't exist !\n");
       sendSpecificMessage(acceptation, "The file doesn't exist !");
-      // send something to the user
     }
     else
     {
@@ -221,7 +221,7 @@ void fileSendThreadFunc(void* arg)
 }
 
 // prepare the sending of the file
-void prepareSendingFile(void* data){
+void * prepareSendingFile(void* data){
 
   sendFileStruct* dataSend = (sendFileStruct*)data;
   FILE *fp;
@@ -260,6 +260,7 @@ void prepareSendingFile(void* data){
 
       sendFile(dataSend->client, file, dataSend->filename);
   }
+    return NULL;
 }
 
 // transfer the file to the user

@@ -1,14 +1,11 @@
 #include <stdio.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <regex.h>
 
 #include "../headers/channel.h"
-#include "../headers/list.h"
 #include "../headers/admin.h"
 #include "../headers/server.h"
 #include "../headers/sema.h"
@@ -82,14 +79,40 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     }
     else if (strcmp(strto, "/channel") == 0)
     {
-        printf("Go to create channel function");
+        printf("Go to create channel function\n");
         checkChannel((*sock_cli).clients, (*sock_cli).client, channelList->freePlaces, msg);
     }
     else if (strcmp(strto, "/jchannel") == 0)
     {
-        printf("Go to join channel function");
+        printf("Go to join channel function\n");
+        joinChannel(msg, channelList, (*sock_cli).client, (*sock_cli).clients);
     }
     return 0;
+}
+
+void joinChannel(char* msg, ChannelList* channelList, int client, List* clients){
+    char** cmd = str_split(msg, 1);
+    int index = atoi(cmd[1]);
+    //verif ici
+    Channel* chosenChannel = getChannelByIndex(channelList, index);
+    printf("chosen port = %d \n", chosenChannel->port);
+    int port = chosenChannel->port;
+    char* portString = (char*)malloc(4*sizeof(char));
+    sprintf(portString, "%d", port);
+    char* sendCommand = (char*)malloc(strlen(portString) + strlen(cmd[0]) + 1);
+    strcpy(sendCommand, cmd[0]);
+    strcat(sendCommand, " ");
+    strcat(sendCommand, portString);
+    // We add to the client to the good channel
+    char* clientPseudo = getPseudoById(clients, client);
+    printf("pseudo get = %s \n", clientPseudo);
+    addFirst(chosenChannel->clients, client, clientPseudo);
+    displayList(chosenChannel->clients);
+    // We delete from this channel the good client
+    delVal(clients, client);
+    displayList(clients);
+    // We send the port to the client
+    sendSpecificMessage(client, sendCommand);
 }
 
 void checkChannel(List* clients, int client, int freePlaces, char* message)
@@ -113,7 +136,7 @@ void checkChannel(List* clients, int client, int freePlaces, char* message)
     }
 }
 
-void createNewChannel(char *cmd)
+void * createNewChannel(void *cmd)
 {
     if (countSpaceCommand(cmd, 1) == 1)
     {
@@ -124,6 +147,7 @@ void createNewChannel(char *cmd)
     {
         printf("/channel channelName ! \n");
     }
+    return NULL;
 }
 
 // Allows the server to stop and stop all the user connected
@@ -254,7 +278,7 @@ void sendPrivateMessage(char *msg, int client, List *sockets)
 }
 
 // Sending a message to the client
-void transmitMessage(void *sock_client)
+void * transmitMessage(void *sock_client)
 {
     tss *sock_cli = (tss *)sock_client;
     u_long pseudoSize = strlen((*sock_cli).pseudoSender) + 1;
@@ -271,4 +295,15 @@ void transmitMessage(void *sock_client)
     // Transmit message size
     sendSpecificMessage((*sock_cli).client, messageTransmited);
     greenMessage("Message transmitted\n");
+    return NULL;
+}
+
+void sendSpecificNumber(int client, int number)
+{
+    int numberToSend = number;
+    // Send connection message size
+    if (send(client, &numberToSend, sizeof(int), 0) == -1)
+    {
+        redErrorMessage("Error sending number\n");
+    }
 }

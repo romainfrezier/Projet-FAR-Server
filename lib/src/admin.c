@@ -1,11 +1,8 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 
 #include "../headers/admin.h"
-#include "../headers/list.h"
 #include "../headers/stringFunc.h"
 #include "../headers/commandServer.h"
 
@@ -39,17 +36,17 @@ void kick(char *message, int client, List* sockets)
             }
             else
             {
-                sendSpecificMessage(client, "The user doesn't exist !\n");
+                sendSpecificMessage(client, "The user doesn't exist !");
             }
         }
         else
         {
-            sendSpecificMessage(client, "You don't have the permission !\n");
+            sendSpecificMessage(client, "You don't have the permission !");
         }
     }
     else
     {
-        sendSpecificMessage(client, "The command is : [/kick targetPseudo] \n");
+        sendSpecificMessage(client, "The command is : [/kick targetPseudo]");
     }
 }
 
@@ -65,12 +62,12 @@ void adminVerification(char *message, int client, List* sockets)
             if (pseudo != NULL)
             {
                 setUserAdmin(sockets, client);
-                sendSpecificMessage(client, "You are now an admin !\n");
+                sendSpecificMessage(client, "\nYou are now an admin !\n");
             }
         }
         else
         {
-            sendSpecificMessage(client, "That's not the current admin key !\n");
+            sendSpecificMessage(client, "That's not the current admin key !");
         }
     }
     else

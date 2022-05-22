@@ -28,12 +28,12 @@ struct thread_receiveFile
     long fileSize;
 };
 
-void fileGetThreadFunc(void *arg);                                  // connect socket for get file
-void fileSendThreadFunc(void *arg);                                 // connect socket for send file
+void * fileGetThreadFunc(void *arg);                                  // connect socket for get file
+void * fileSendThreadFunc(void *arg);                                 // connect socket for send file
 void receiveFile(fileStruct *fileInfo, int client, char *filename); // prepare the receiving of the file
-void fileTransferReception(void *receiveFileData);                  // receive the file from the user
+void *fileTransferReception(void *receiveFileData);                  // receive the file from the user
 char *listFile(char *folder);                                       // list the file of the server
-void prepareSendingFile(void* data);                                // prepare the sending of the file
+void * prepareSendingFile(void* data);                                // prepare the sending of the file
 void sendFile(int client, fileStruct *file, char *filename);        // transfer the file to the user
 
 #endif // FILESERVER_H_

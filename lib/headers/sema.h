@@ -22,4 +22,4 @@ void rk_sema_wait(struct rk_sema *s);                   // wait a semaphore
 void rk_sema_post(struct rk_sema *s);                   // post a semaphore
 void rk_sema_destroy(struct rk_sema *s);                // destroy a semephore
 
-#endif // SEMA_H
+#endif // SEMA_H_

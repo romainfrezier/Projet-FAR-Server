@@ -221,7 +221,7 @@ void setUserAdmin(List* list, int idUser){
     while (current != NULL && current->value != idUser){
         current = current->next;
     }
-    if (current->value == idUser){
+    if ((current != NULL) && (current->value == idUser)){
         current->admin = 1;
     }
 }
@@ -307,7 +307,7 @@ void setPseudo(List *list, int client, char *pseudo){
     {
         current = current->next;
     }
-    if (current->value == client)
+    if ((current != NULL) && (current->value == client))
     {
         current->pseudo = pseudo;
     }

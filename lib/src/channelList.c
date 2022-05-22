@@ -3,12 +3,12 @@
 #include <string.h>
 
 #include "../headers/channel.h"
-#include "../headers/list.h"
 
 ChannelList* createChannelList(int size){
     ChannelList* newChannelList = (ChannelList*)malloc(sizeof(ChannelList));
     newChannelList->freePlaces = size;
     newChannelList->head = NULL;
+    newChannelList->maxPlaces = size;
     return newChannelList;
 }
 
@@ -79,4 +79,28 @@ char* listChannel(ChannelList* list){
     }
 
     return finalString;
+}
+
+Channel* getChannelByIndex(ChannelList* list, int index){
+    Channel *current = list->head;
+    int index_current = 1;
+    if (index == 1){
+        printf("ouiii \n");
+        return current;
+    }
+    else {
+        if (index <= list->maxPlaces){
+            while (index_current != index)
+            {
+                current = current->next;
+                index_current++;
+            }
+            return current;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+
 }

@@ -24,8 +24,8 @@ struct thread_sockets_send
     char *pseudoSender;
 };
 
-void generateChannel(void *channel_struct);
-void receiveMessage(void *sock_client);
+void * generateChannel(void *channel_struct);
+void * receiveMessage(void *sock_client);
 void prepareGenerateChannel(char *name);
 
 #endif // SERVER_H_

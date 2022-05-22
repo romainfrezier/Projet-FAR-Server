@@ -4,9 +4,6 @@
 #include <semaphore.h>
 #endif
 #include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
 #include "../headers/sema.h"
 
 // initialize a semaphore
@@ -45,7 +42,7 @@ void rk_sema_post(struct rk_sema *s)
 #endif
 }
 
-// destroy a semephore
+// destroy a semaphore
 void rk_sema_destroy(struct rk_sema *s)
 {
 #ifdef __APPLE__
