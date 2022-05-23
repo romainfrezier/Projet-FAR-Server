@@ -104,3 +104,14 @@ Channel* getChannelByIndex(ChannelList* list, int index){
     }
 
 }
+
+int pseudoInAllChannel(ChannelList* list, char* pseudo){
+    Channel *currentChannel = list->head;
+    int res = 1;
+    while (currentChannel != NULL && res != 0)
+    {
+        res = pseudoInList(currentChannel->clients, pseudo);
+        currentChannel = currentChannel->next;
+    }
+    return res;
+}

@@ -71,14 +71,12 @@ void * generateChannel(void *channel)
   {
     redErrorMessage("setsockopt(SO_REUSEADDR) failed");
   }
-  printf("Socket created\n");
 
   struct sockaddr_in ad;
   ad.sin_family = AF_INET;
   ad.sin_addr.s_addr = INADDR_ANY;
   ad.sin_port = htons(port);
   bind(dS, (struct sockaddr *)&ad, sizeof(ad));
-  printf("Socket named\n");
 
   dSFileGet = socket(PF_INET, SOCK_STREAM, 0);
   if (dSFileGet < 0)
@@ -89,14 +87,12 @@ void * generateChannel(void *channel)
   {
     redErrorMessage("setsockopt(SO_REUSEADDR) failed for fileGet");
   }
-  printf("Socket fileGet created\n");
 
   struct sockaddr_in adFileGet;
   adFileGet.sin_family = AF_INET;
   adFileGet.sin_addr.s_addr = INADDR_ANY;
   adFileGet.sin_port = htons(port + 1);
   bind(dSFileGet, (struct sockaddr *)&adFileGet, sizeof(adFileGet));
-  printf("File socketGet named\n");
 
   dSFileSend = socket(PF_INET, SOCK_STREAM, 0);
   if (dSFileSend < 0)
@@ -107,13 +103,12 @@ void * generateChannel(void *channel)
   {
     redErrorMessage("setsockopt(SO_REUSEADDR) failed for fileSend");
   }
-  printf("Socket fileSend created\n");
+
   struct sockaddr_in adFileSend;
   adFileSend.sin_family = AF_INET;
   adFileSend.sin_addr.s_addr = INADDR_ANY;
   adFileSend.sin_port = htons(port + 2);
   bind(dSFileSend, (struct sockaddr *)&adFileSend, sizeof(adFileSend));
-  printf("File socketGet named\n");
 
   listen(dS, MAX_CONNEXION);
   listen(dSFileGet, MAX_CONNEXION);
@@ -141,8 +136,22 @@ void * generateChannel(void *channel)
     // Wait for space in the user list
     rk_sema_wait(&sem);
     int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
-    sendSpecificMessage(acceptation, "Please choose your username : ");
+    Link *current = (*channelCreated).clients->head;
+    while ((current != NULL) && (current->alreadyConnected != 1))
+    { 
+      current = current->next;
+    }
 
+    if (current == NULL)
+    {
+      sendSpecificMessage(acceptation, "Please choose your username : ");
+    }
+    else
+    {
+      current->value = acceptation;
+    }
+
+    changeACforJoin((*channelCreated).clients, acceptation);
     // and we attributed a reception thread to each
     tsr *receiveData = (tsr *)malloc(sizeof(tsr));
     (*receiveData).client = acceptation;
@@ -169,44 +178,49 @@ void * generateChannel(void *channel)
 void * receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;
-  u_long size;
-  char *pseudo;
-  int check;
-  do
+  printf("here %d\n",(*sock_cli).client);
+  Link *client = getClientById((*sock_cli).clients, (*sock_cli).client);
+  if (client == NULL)
   {
-    if (recv((*sock_cli).client, &size, sizeof(u_long), 0) == -1)
+    u_long sizePseudo;
+    char *pseudo;
+    int check;
+    do
     {
-      redErrorMessage("Error message size received\n");
-    }
-    blueMessage("Size received\n");
-    pseudo = (char *)malloc(sizeof(char) * size);
-    if (recv((*sock_cli).client, pseudo, size, 0) == -1)
-    {
-      redErrorMessage("Error message received\n");
-    }
-    blueMessage("Pseudo received : ");
+      if (recv((*sock_cli).client, &sizePseudo, sizeof(u_long), 0) == -1)
+      {
+        redErrorMessage("Error message size received\n");
+      }
+      blueMessage("Size received\n");
+      pseudo = (char *)malloc(sizeof(char) * sizePseudo);
+      if (recv((*sock_cli).client, pseudo, sizePseudo, 0) == -1)
+      {
+        redErrorMessage("Error message received\n");
+      }
+      blueMessage("Pseudo received : ");
+      blueMessage(pseudo);
+      printf("\n");
+      check = pseudoInAllChannel(channelList, pseudo);
+      if (check == 0)
+      {
+        sendSpecificMessage((*sock_cli).client, "Username already used !\nPlease choose another username : ");
+      }
+    } while (check == 0);
+
+    sendSpecificMessage((*sock_cli).client, "Connected !");
+    blueMessage("Pseudo accepted : ");
     blueMessage(pseudo);
     printf("\n");
-    check = pseudoInList(sock_cli->clients, pseudo);
-    if (check == 0)
-    {
-      sendSpecificMessage((*sock_cli).client, "Username already used !\nPlease choose another username : ");
-    }
-  } while (check == 0);
 
-  sendSpecificMessage((*sock_cli).client, "Connected !");
-  blueMessage("Pseudo accepted : ");
-  blueMessage(pseudo);
-  printf("\n");
-
-  // add the client to the socket list
-  pthread_mutex_lock(&(sock_cli->mutex));
-  addFirst(sock_cli->clients, sock_cli->client, pseudo);
-  pthread_mutex_unlock(&(sock_cli->mutex));
-  printf("User connected with id : %d\n", sock_cli->client);
-
+    // add the client to the socket list
+    pthread_mutex_lock(&(sock_cli->mutex));
+    addFirst(sock_cli->clients, sock_cli->client, pseudo);
+    pthread_mutex_unlock(&(sock_cli->mutex));
+    printf("User connected with id : %d\n", sock_cli->client);
+  }
   while (1)
   {
+    u_long size;
     // Size reception
     int receive = recv((*sock_cli).client, &size, sizeof(u_long), 0);
     if (receive == -1)
@@ -215,7 +229,7 @@ void * receiveMessage(void *sock_client)
     }
     else if (receive == 0)
     {
-      redMessage("Connexion lost\n");
+      redMessage("Connexion with user lost\n");
       break;
     }
 

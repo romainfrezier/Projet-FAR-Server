@@ -29,5 +29,6 @@ int channelListIsEmpty(ChannelList *list);
 Channel *createChannel(char *name, int port, pthread_t thread, int size);
 char *listChannel(ChannelList *list);
 Channel *getChannelByIndex(ChannelList *list, int index);
+int pseudoInAllChannel(ChannelList *list, char *pseudo);
 
 #endif // CHANNEL_H_

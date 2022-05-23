@@ -41,6 +41,34 @@ void addFirst(List *list, int value, char *pseudo)
         link->value = value;
         link->pseudo = pseudo;
         link->admin = -1;
+        link->alreadyConnected = 0;
+        if (list->head == NULL)
+        {
+            list->head = link;
+            link->next = NULL;
+        }
+        else
+        {
+            link->next = list->head;
+            list->head = link;
+        }
+        list->size = list->size - 1;
+    }
+}
+
+void addFirstClient(List *list, Link *client, char *pseudo)
+{
+    if (list->size == 0)
+    {
+        printf("There is no more space in the server !\n");
+    }
+    else
+    {
+        Link *link = (Link *)malloc(sizeof(Link));
+        link->value = client->value;
+        link->pseudo = pseudo;
+        link->admin = client->admin;
+        link->alreadyConnected = client->alreadyConnected;
         if (list->head == NULL)
         {
             list->head = link;
@@ -221,7 +249,7 @@ void setUserAdmin(List* list, int idUser){
     while (current != NULL && current->value != idUser){
         current = current->next;
     }
-    if ((current != NULL) && (current->value == idUser)){
+    if (current != NULL){
         current->admin = 1;
     }
 }
@@ -310,5 +338,31 @@ void setPseudo(List *list, int client, char *pseudo){
     if ((current != NULL) && (current->value == client))
     {
         current->pseudo = pseudo;
+    }
+}
+
+Link* getClientById(List* list, int id){
+    Link *current = list->head;
+    while ((current != NULL) && (current->value != id))
+    {
+        current = current->next;
+    }
+    return current;
+}
+
+void changeACforJoin(List* list, int idClient)
+{
+    Link *current = list->head;
+    while (current != NULL && current->value != idClient)
+    {
+        current = current->next;
+    }
+    if (current != NULL && current->alreadyConnected == 0)
+    {
+        current->alreadyConnected = 1;
+    }
+    else if (current != NULL && current->alreadyConnected == 1)
+    {
+        current->alreadyConnected = 0;
     }
 }

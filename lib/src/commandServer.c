@@ -90,29 +90,31 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     return 0;
 }
 
-void joinChannel(char* msg, ChannelList* channelList, int client, List* clients){
+void joinChannel(char* msg, ChannelList* channelList, int idClient, List* clients){
     char** cmd = str_split(msg, 1);
     int index = atoi(cmd[1]);
-    //verif ici
     Channel* chosenChannel = getChannelByIndex(channelList, index);
-    printf("chosen port = %d \n", chosenChannel->port);
+
     int port = chosenChannel->port;
     char* portString = (char*)malloc(4*sizeof(char));
     sprintf(portString, "%d", port);
+
     char* sendCommand = (char*)malloc(strlen(portString) + strlen(cmd[0]) + 1);
     strcpy(sendCommand, cmd[0]);
     strcat(sendCommand, " ");
     strcat(sendCommand, portString);
+
     // We add to the client to the good channel
-    char* clientPseudo = getPseudoById(clients, client);
-    printf("pseudo get = %s \n", clientPseudo);
-    addFirst(chosenChannel->clients, client, clientPseudo);
-    displayList(chosenChannel->clients);
+    changeACforJoin(clients, idClient);
+    Link *client = getClientById(clients, idClient);
+    char *clientPseudo = getPseudoById(clients, idClient);
+    addFirstClient(chosenChannel->clients, client, clientPseudo);
+
     // We delete from this channel the good client
-    delVal(clients, client);
-    displayList(clients);
+    delVal(clients, idClient);
+
     // We send the port to the client
-    sendSpecificMessage(client, sendCommand);
+    sendSpecificMessage(idClient, sendCommand);
 }
 
 void checkChannel(List* clients, int client, int freePlaces, char* message)
@@ -125,7 +127,6 @@ void checkChannel(List* clients, int client, int freePlaces, char* message)
         }
         else
         {
-            printf("Go to create channel func ! \n");
             pthread_t createChannelThread;
             pthread_create(&createChannelThread, NULL, createNewChannel, message);
         }
