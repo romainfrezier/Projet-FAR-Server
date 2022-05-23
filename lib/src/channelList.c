@@ -56,7 +56,7 @@ void addLastChannel(ChannelList* list, Channel* channel)
 char* listChannel(ChannelList* list){
     Channel *current = list->head;
 
-    char *start = "List of channel(s) : \n";
+    char *start = "\nList of channel(s) : \n";
     char *finalString = (char *)malloc(strlen(start));
     strcat(finalString, start);
     int count = 1;
@@ -85,7 +85,6 @@ Channel* getChannelByIndex(ChannelList* list, int index){
     Channel *current = list->head;
     int index_current = 1;
     if (index == 1){
-        printf("ouiii \n");
         return current;
     }
     else {

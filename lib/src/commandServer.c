@@ -87,10 +87,30 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
         printf("Go to join channel function\n");
         joinChannel(msg, channelList, (*sock_cli).client, (*sock_cli).clients);
     }
+    else if (strcmp(strto, "/mchannel") == 0)
+    {
+        printf("Go to modify channel function\n");
+        modifyChannel(channelList, msg, (*sock_cli).client, (*sock_cli).clients);
+    }
     return 0;
 }
 
-void joinChannel(char* msg, ChannelList* channelList, int idClient, List* clients){
+void modifyChannel(ChannelList *channelList, char* message, int client, List* clients)
+{
+    if (isUserAdmin(clients, client) == 1)
+    {
+        char **array = str_split(message, 3);
+        int index = atoi(array[1]);
+        Channel *chosenChannel = getChannelByIndex(channelList, index);
+        chosenChannel->name = array[2];
+    }
+    else
+    {
+        sendSpecificMessage(client, "\nYou can't modify a channel if your are not an admin\n");
+    }
+}
+    void joinChannel(char *msg, ChannelList *channelList, int idClient, List *clients)
+{
     char** cmd = str_split(msg, 1);
     int index = atoi(cmd[1]);
     Channel* chosenChannel = getChannelByIndex(channelList, index);
@@ -123,7 +143,7 @@ void checkChannel(List* clients, int client, int freePlaces, char* message)
     {
         if (freePlaces == 0)
         {
-            sendSpecificMessage(client, "The maximum number of channels has been reached.\nYou can no longer add it for the moment.\n");
+            sendSpecificMessage(client, "\nThe maximum number of channels has been reached.\nYou can no longer add it for the moment.\n");
         }
         else
         {
@@ -133,7 +153,7 @@ void checkChannel(List* clients, int client, int freePlaces, char* message)
     }
     else
     {
-        sendSpecificMessage(client, "You can't create a channel if your are not an admin");
+        sendSpecificMessage(client, "\nYou can't create a channel if your are not an admin\n");
     }
 }
 

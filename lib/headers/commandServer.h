@@ -18,5 +18,6 @@ void * createNewChannel(void *cmd);
 void checkChannel(List *clients, int client, int freePlaces, char *message);
 void joinChannel(char *msg, ChannelList *channelList, int client, List *clients);
 void sendSpecificNumber(int client, int number);
+void modifyChannel(ChannelList *channelList, char *message, int client, List *clients);
 
 #endif // COMMANDSERVER_H_
