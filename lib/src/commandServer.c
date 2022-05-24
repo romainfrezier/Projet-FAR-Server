@@ -75,7 +75,7 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     else if (strcmp(strto, "/lchannel") == 0)
     {
         printf("Go to list channel function \n");
-        sendSpecificMessage((*sock_cli).client, listChannel(channelList));
+        sendSpecificMessage((*sock_cli).client, listChannel(channelList, (*sock_cli).client));
     }
     else if (strcmp(strto, "/channel") == 0)
     {
@@ -92,98 +92,12 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
         printf("Go to modify channel function\n");
         modifyChannel(channelList, msg, (*sock_cli).client, (*sock_cli).clients);
     }
+    else if (strcmp(strto, "/rmchannel") == 0)
+    {
+        printf("Go to remove channel function\n");
+        removeChannel(msg, channelList, (*sock_cli).client, (*sock_cli).clients);
+    }
     return 0;
-}
-
-void modifyChannel(ChannelList *channelList, char* message, int client, List* clients)
-{
-    if (isUserAdmin(clients, client) == 1)
-    {
-        char **array = str_split(message, 3);
-        int index = atoi(array[1]);
-        Channel *chosenChannel = getChannelByIndex(channelList, index);
-        chosenChannel->name = array[2];
-    }
-    else
-    {
-        sendSpecificMessage(client, "\nYou can't modify a channel if your are not an admin\n");
-    }
-}
-    void joinChannel(char *msg, ChannelList *channelList, int idClient, List *clients)
-{
-    char** cmd = str_split(msg, 1);
-    int index = atoi(cmd[1]);
-    Channel* chosenChannel = getChannelByIndex(channelList, index);
-
-    int port = chosenChannel->port;
-    char* portString = (char*)malloc(4*sizeof(char));
-    sprintf(portString, "%d", port);
-
-    char* sendCommand = (char*)malloc(strlen(portString) + strlen(cmd[0]) + 1);
-    strcpy(sendCommand, cmd[0]);
-    strcat(sendCommand, " ");
-    strcat(sendCommand, portString);
-
-    // We add to the client to the good channel
-    changeACforJoin(clients, idClient);
-    Link *client = getClientById(clients, idClient);
-    char *clientPseudo = getPseudoById(clients, idClient);
-    addFirstClient(chosenChannel->clients, client, clientPseudo);
-
-    // We delete from this channel the good client
-    delVal(clients, idClient);
-
-    // We send the port to the client
-    sendSpecificMessage(idClient, sendCommand);
-}
-
-void checkChannel(List* clients, int client, int freePlaces, char* message)
-{
-    if (isUserAdmin(clients, client) == 1)
-    {
-        if (freePlaces == 0)
-        {
-            sendSpecificMessage(client, "\nThe maximum number of channels has been reached.\nYou can no longer add it for the moment.\n");
-        }
-        else
-        {
-            pthread_t createChannelThread;
-            pthread_create(&createChannelThread, NULL, createNewChannel, message);
-        }
-    }
-    else
-    {
-        sendSpecificMessage(client, "\nYou can't create a channel if your are not an admin\n");
-    }
-}
-
-void * createNewChannel(void *cmd)
-{
-    if (countSpaceCommand(cmd, 1) == 1)
-    {
-        char **msg = str_split(cmd, 1);
-        prepareGenerateChannel(msg[1]);
-    }
-    else
-    {
-        printf("/channel channelName ! \n");
-    }
-    return NULL;
-}
-
-// Allows the server to stop and stop all the user connected
-void channelQuit(int n, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
-{
-    // Shutdown of all user sockets
-    Link *current = sockets->head;
-    while (current != NULL)
-    {
-        Link *next = current->next;
-        userQuit(current->value, sockets, sem, mutexList);
-        current = next;
-    }
-    redErrorMessage("\nThe server has been stopped !\n");
-    exit(0);
 }
 
 // send a message of all user of the chat server
@@ -200,7 +114,7 @@ void userQuit(int socket, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
     pthread_mutex_unlock(&mutexList);
     shutdown(socket, 2);
     rk_sema_post(&sem);
-    printf("User %d has been stopped\n", socket);
+    printf("\t• User %d has been stopped\n", socket);
 }
 
 // Check if a message contains insult. Return 0 if there is no insult

@@ -123,7 +123,7 @@ char *listFile(char *folder)
 {
   DIR *d;
   struct dirent *dir;
-  char *fileList = "List of server files : \n\n";
+  char *fileList = "\nList of server files : \n\n";
   char *finalString = (char *)malloc(strlen(fileList));
   strcpy(finalString, fileList);
   d = opendir("./serverStorage");
@@ -133,8 +133,8 @@ char *listFile(char *folder)
     {
       if ((strcmp(dir->d_name, ".") != 0) && (strcmp(dir->d_name, "..") != 0) && (strcmp(dir->d_name, ".DS_Store") != 0))
       {
-        char *filename = (char *)malloc((strlen(dir->d_name)) * sizeof(char) + strlen("\n") + strlen("  - "));
-        strcat(filename, "  - ");
+        char *filename = (char *)malloc((strlen(dir->d_name)) * sizeof(char) + strlen("\n") + strlen("\t• "));
+        strcat(filename, "\t• ");
         strcat(filename, dir->d_name);
         strcat(filename, "\n");
         finalString = (char *)realloc(finalString, (strlen(finalString) + strlen(filename)) * sizeof(char));

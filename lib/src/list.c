@@ -272,12 +272,12 @@ int isUserAdmin(List* list, int idUser){
 char *getAllUsers(List *list, int client)
 {
     Link* current = list->head;
-    char *start = "Users connected : \n";
+    char *start = "\nUsers connected : \n\n";
 
     // List of different components of the user list
     char *admin = "(admin)";
     char *me = "(me)";
-    char *tab = "   - ";
+    char *tab = "\t• ";
     char *space = " ";
     char *retn = "\n";
 

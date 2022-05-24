@@ -53,7 +53,7 @@ void addLastChannel(ChannelList* list, Channel* channel)
     }
 }
 
-char* listChannel(ChannelList* list){
+char* listChannel(ChannelList* list, int client){
     Channel *current = list->head;
 
     char *start = "\nList of channel(s) : \n";
@@ -63,14 +63,24 @@ char* listChannel(ChannelList* list){
 
     while (current != NULL)
     {
-        char *line = (char *)malloc(strlen(current->name) + strlen("    00. \n"));
+        char *line = (char *)malloc(strlen(current->name) + strlen("\t00. \n"));
         char* number;
         asprintf(&number, "%d", count);
-        strcat(line, "   ");
+        strcat(line, "\t");
         strcat(line, number);
         strcat(line, ". ");
         strcat(line, current->name);
-        strcat(line, "\n");
+
+        if (getClientById(current->clients, client) != NULL)
+        {
+            line = realloc(line, strlen(line) + strlen(" (in)\n"));
+            strcat(line, " (in)\n");
+        }
+        else
+        {
+            strcat(line, "\n");
+        }
+        
         finalString = realloc(finalString, strlen(finalString) + strlen(line));
         strcat(finalString, line);
         free(line);
@@ -113,4 +123,21 @@ int pseudoInAllChannel(ChannelList* list, char* pseudo){
         currentChannel = currentChannel->next;
     }
     return res;
+}
+
+void delChannel(ChannelList *list, int index){
+    Channel *currentChannel = list->head;
+    int i = 1;
+    while ((currentChannel != NULL) && ((i+1) != index))
+    {
+        currentChannel = currentChannel->next;
+        i++;
+    }
+    if (currentChannel != NULL)
+    {
+        Channel *deleted = currentChannel->next;
+        currentChannel->next = currentChannel->next->next;
+        free(deleted);
+    }
+    
 }

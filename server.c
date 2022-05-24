@@ -24,6 +24,7 @@ int channelCount = 0;
 // We want to create a send thread and a reception thread for each user
 int main(int argc, char *argv[])
 {
+  signal(SIGINT, serverQuit);
   channelList = createChannelList(maxChannel);
   prepareGenerateChannel("Welcome");
   // Server shutdown
@@ -47,68 +48,23 @@ void prepareGenerateChannel(char *name)
 void * generateChannel(void *channel)
 {
   rk_sema sem;
-  int dSFileGet;
-  int dSFileSend;
+  rk_sema_init(&sem, MAX_CONNEXION);
   pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
+  
   Channel *channelData = (Channel *)channel;
-  Channel *channelCreated = createChannel(channelData->name, channelData->port, channelData->thread, MAX_CONNEXION);
+  Channel *channelCreated = createChannel(channelData->name, channelData->port, channelData->thread, MAX_CONNEXION, sem, mutexList);
   addLastChannel(channelList, channelCreated);
 
   int port = (*channelCreated).port;
 
-  rk_sema_init(&sem, MAX_CONNEXION);
 
   printf("Start channel\n");
 
   int enable = 1;
 
-  int dS = socket(PF_INET, SOCK_STREAM, 0);
-  if (dS < 0)
-  {
-    redErrorMessage("ERROR opening socket");
-  }
-  if (setsockopt(dS, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-  {
-    redErrorMessage("setsockopt(SO_REUSEADDR) failed");
-  }
-
-  struct sockaddr_in ad;
-  ad.sin_family = AF_INET;
-  ad.sin_addr.s_addr = INADDR_ANY;
-  ad.sin_port = htons(port);
-  bind(dS, (struct sockaddr *)&ad, sizeof(ad));
-
-  dSFileGet = socket(PF_INET, SOCK_STREAM, 0);
-  if (dSFileGet < 0)
-  {
-    redErrorMessage("ERROR opening socket fileGet");
-  }
-  if (setsockopt(dSFileGet, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-  {
-    redErrorMessage("setsockopt(SO_REUSEADDR) failed for fileGet");
-  }
-
-  struct sockaddr_in adFileGet;
-  adFileGet.sin_family = AF_INET;
-  adFileGet.sin_addr.s_addr = INADDR_ANY;
-  adFileGet.sin_port = htons(port + 1);
-  bind(dSFileGet, (struct sockaddr *)&adFileGet, sizeof(adFileGet));
-
-  dSFileSend = socket(PF_INET, SOCK_STREAM, 0);
-  if (dSFileSend < 0)
-  {
-    redErrorMessage("ERROR opening socket fileSend");
-  }
-  if (setsockopt(dSFileSend, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-  {
-    redErrorMessage("setsockopt(SO_REUSEADDR) failed for fileSend");
-  }
-
-  struct sockaddr_in adFileSend;
-  adFileSend.sin_family = AF_INET;
-  adFileSend.sin_addr.s_addr = INADDR_ANY;
-  adFileSend.sin_port = htons(port + 2);
-  bind(dSFileSend, (struct sockaddr *)&adFileSend, sizeof(adFileSend));
+  int dS = createAndBindSocket(port);
+  int dSFileGet = createAndBindSocket(port + 1);
+  int dSFileSend = createAndBindSocket(port + 2);
 
   listen(dS, MAX_CONNEXION);
   listen(dSFileGet, MAX_CONNEXION);
@@ -120,7 +76,6 @@ void * generateChannel(void *channel)
   printf("\n");
   struct sockaddr_in aC;
   socklen_t lg = sizeof(struct sockaddr_in);
-  signal(SIGINT, channelQuit);
 
   pthread_t fileGetThread;
   int *argGet = malloc(sizeof(int));
@@ -178,7 +133,6 @@ void * generateChannel(void *channel)
 void * receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;
-  printf("here %d\n",(*sock_cli).client);
   Link *client = getClientById((*sock_cli).clients, (*sock_cli).client);
   if (client == NULL)
   {
@@ -245,13 +199,14 @@ void * receiveMessage(void *sock_client)
 
     int censorship = checkCensorship(msg);
 
+    // check censorship before everything
     if (censorship != 0)
     {
       sendSpecificMessage((*sock_cli).client, "\033[0;31m\nDon't insult! Your message has not been sent...\n");
     }
     else if (msg[0] == '/')
     {
-      // Commands management here
+      // Commands management
       int checkCmd = checkCommand(msg, sock_cli, (*sock_cli).sem, channelList);
       if (checkCmd == -1)
       {
@@ -283,4 +238,36 @@ void * receiveMessage(void *sock_client)
     // free(msg);
   }
   return NULL;
+}
+
+int createAndBindSocket(int port){
+  int enable = 1;
+  int dS = socket(PF_INET, SOCK_STREAM, 0);
+  if (dS < 0)
+  {
+    redErrorMessage("ERROR opening socket fileSend");
+  }
+  if (setsockopt(dS, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+  {
+    redErrorMessage("setsockopt(SO_REUSEADDR) failed for fileSend");
+  }
+  struct sockaddr_in adFileSend;
+  adFileSend.sin_family = AF_INET;
+  adFileSend.sin_addr.s_addr = INADDR_ANY;
+  adFileSend.sin_port = htons(port);
+  bind(dS, (struct sockaddr *)&adFileSend, sizeof(adFileSend));
+  return dS;
+}
+
+void serverQuit(int n){
+  Channel *current = channelList->head;
+  while (current != NULL)
+  {
+    channelQuit(current->clients, current->semaphore, current->mutex);
+    redMessage("\nThe channel ");
+    redMessage(current->name);
+    redMessage(" has been stopped\n");
+    current = current->next;
+  }
+  redErrorMessage("\nThe server has been stopped\n");
 }
