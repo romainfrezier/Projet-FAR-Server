@@ -26,7 +26,7 @@ struct thread_sockets_send
 
 void * generateChannel(void *channel_struct);
 void * receiveMessage(void *sock_client);
-void prepareGenerateChannel(char *name);
+void prepareGenerateChannel(char *name, char* theme);
 int createAndBindSocket(int port);
 void serverQuit(int n);
 

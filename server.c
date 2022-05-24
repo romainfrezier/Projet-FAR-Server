@@ -26,18 +26,19 @@ int main(int argc, char *argv[])
 {
   signal(SIGINT, serverQuit);
   channelList = createChannelList(maxChannel);
-  prepareGenerateChannel("Welcome");
+  prepareGenerateChannel("Welcome", "The home channel !");
   // Server shutdown
   // free(adminKey);
   printf("End program\n");
 }
 
-void prepareGenerateChannel(char *name)
+void prepareGenerateChannel(char *name, char* theme)
 {
   Channel *channelData = (Channel *)malloc(sizeof(Channel));
   channelData->port = (defaultPort + (channelCount * 5));
   channelData->name = name;
   channelData->channelList = channelList;
+  channelData->theme = theme;
   pthread_t channelThread;
   pthread_create(&channelThread, NULL, generateChannel, channelData);
   channelData->thread = channelThread;
@@ -52,7 +53,7 @@ void * generateChannel(void *channel)
   pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
   
   Channel *channelData = (Channel *)channel;
-  Channel *channelCreated = createChannel(channelData->name, channelData->port, channelData->thread, MAX_CONNEXION, sem, mutexList);
+  Channel *channelCreated = createChannel(channelData->name, channelData->theme, channelData->port, channelData->thread, MAX_CONNEXION, sem, mutexList);
   addLastChannel(channelList, channelCreated);
 
   int port = (*channelCreated).port;

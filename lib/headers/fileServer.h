@@ -35,5 +35,6 @@ void *fileTransferReception(void *receiveFileData);                  // receive 
 char *listFile(char *folder);                                       // list the file of the server
 void * prepareSendingFile(void* data);                                // prepare the sending of the file
 void sendFile(int client, fileStruct *file, char *filename);        // transfer the file to the user
+char* chooseNameFile(char* nameFile, int i);                             // Choose a file name for the file transfered
 
 #endif // FILESERVER_H_

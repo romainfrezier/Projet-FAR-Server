@@ -63,13 +63,21 @@ char* listChannel(ChannelList* list, int client){
 
     while (current != NULL)
     {
-        char *line = (char *)malloc(strlen(current->name) + strlen("\t00. \n"));
-        char* number;
+        char* name = (char*)malloc(strlen(current->name));
+        strcpy(name, current->name);
+        char* theme = (char*)malloc(strlen(current->theme));
+        strcpy(theme, current->theme);
+        size_t size = strlen(name) + strlen("\t00. : \n") + strlen(theme);
+        char *line = (char *)malloc(size);
+        bzero(line, size);
+        char *number;
         asprintf(&number, "%d", count);
         strcat(line, "\t");
         strcat(line, number);
         strcat(line, ". ");
-        strcat(line, current->name);
+        strcat(line, name);
+        strcat(line, " : ");
+        strcat(line, theme);
 
         if (getClientById(current->clients, client) != NULL)
         {

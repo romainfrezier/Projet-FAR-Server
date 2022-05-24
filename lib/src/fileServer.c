@@ -2,7 +2,6 @@
 #include <signal.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
@@ -11,11 +10,13 @@
 #include "../headers/fileServer.h"
 #include "../headers/colors.h"
 #include "../headers/commandServer.h"
+#include "../headers/tools.h"
+#include "../headers/stringFunc.h"
 
 #define SIZE 1024
 
 // connect socket for get file
-void * fileGetThreadFunc(void* arg)
+void *fileGetThreadFunc(void *arg)
 {
   int socket = *((int *)arg);
 
@@ -34,7 +35,7 @@ void * fileGetThreadFunc(void* arg)
     blueMessage("Size received\n");
 
     // Struct reception
-    fileStruct *fileInfo = (fileStruct*)malloc(size);
+    fileStruct *fileInfo = (fileStruct *)malloc(size);
     if (recv(acceptation, fileInfo, size, 0) == -1)
     {
       redErrorMessage("Error struct received\n");
@@ -42,7 +43,7 @@ void * fileGetThreadFunc(void* arg)
     blueMessage("Struct received\n");
 
     // filename reception
-    char *filename = (char*)malloc(fileInfo->filenameSize);
+    char *filename = (char *)malloc(fileInfo->filenameSize);
     if (recv(acceptation, filename, fileInfo->filenameSize, 0) == -1)
     {
       redErrorMessage("Error filename received\n");
@@ -50,7 +51,7 @@ void * fileGetThreadFunc(void* arg)
     blueMessage("Filename received\n");
 
     receiveFile(fileInfo, acceptation, filename);
-    }
+  }
 
   free(arg);
   // File thread shutdown
@@ -72,10 +73,11 @@ void receiveFile(fileStruct *fileInfo, int client, char *filename)
 }
 
 // receive the file from the user
-void* fileTransferReception(void *receiveFileData)
+void *fileTransferReception(void *receiveFileData)
 {
   trf *data = (trf *)receiveFileData;
-  char *filename = data->fileName;
+  // char *filename = chooseNameFile(data->fileName);
+  char *filename = chooseNameFile(data->fileName, 1);
   int socket = data->client;
 
   FILE *fprecv;
@@ -115,7 +117,7 @@ void* fileTransferReception(void *receiveFileData)
   greenMessage(path);
   printf("\n");
   fclose(fprecv);
-    return NULL;
+  return NULL;
 }
 
 // list the file of the server
@@ -146,8 +148,51 @@ char *listFile(char *folder)
   return finalString;
 }
 
+char *chooseNameFile(char *nameFile,int i)
+{
+    DIR *d;
+    struct dirent *dir;
+    int found = 1;
+    d = opendir("./serverStorage");
+    while ((dir = readdir(d)) != NULL && found != 0)
+    {
+        if (strcmp(nameFile, dir->d_name) == 0)
+        {
+            found = 0;
+        }
+    }
+    char *arr[3];
+    char *haveNumber[3];
+    if (found == 0)
+    {
+        // change name
+        getRegexGroup(arr, 3, nameFile, "^(.*)(\\..*)$");
+        int regexRes = regex(arr[1], "^(.*)(-[0-9]+).*$");
+        char *cpy = (char*)malloc(strlen(arr[1]));
+        strcpy(cpy, arr[1]);
+        if (regexRes == 0){
+            getRegexGroup(haveNumber, 3, arr[1], "^(.*)(-[0-9]+)");
+            strremove(cpy,haveNumber[2]);
+        }
+        char *number = (char*) malloc(10);
+        char *format = (char*) malloc(10);
+        strcat(format, "-");
+        sprintf(number, "%d", i);
+        strcat(format, number);
+        char *newFilename = (char*)malloc(strlen(cpy)+strlen(format)+strlen(arr[2]));
+        strcpy(newFilename,cpy);
+        strcat(newFilename, format);
+        strcat(newFilename, arr[2]);
+        return chooseNameFile(newFilename, i+1);
+    }
+    else
+    {
+        return nameFile;
+    }
+}
+
 // connect socket for send file
-void * fileSendThreadFunc(void* arg)
+void *fileSendThreadFunc(void *arg)
 {
   FILE *fp;
   int socket = *((int *)arg);
@@ -167,7 +212,7 @@ void * fileSendThreadFunc(void* arg)
     blueMessage("Filename size received\n");
 
     // filename reception
-    char *filename = (char*)malloc(size*sizeof(char));
+    char *filename = (char *)malloc(size * sizeof(char));
     if (recv(acceptation, filename, size, 0) == -1)
     {
       redErrorMessage("Error filename received\n");
@@ -189,7 +234,7 @@ void * fileSendThreadFunc(void* arg)
     else
     {
       sendSpecificMessage(acceptation, "The file exist !");
-      
+
       fseek(fp, 0, SEEK_END);    // Jump to the end of the file
       long fileSize = ftell(fp); // Get the current byte offset in the file
       rewind(fp);                // Jump back to the beginning of the file
@@ -221,9 +266,10 @@ void * fileSendThreadFunc(void* arg)
 }
 
 // prepare the sending of the file
-void * prepareSendingFile(void* data){
+void *prepareSendingFile(void *data)
+{
 
-  sendFileStruct* dataSend = (sendFileStruct*)data;
+  sendFileStruct *dataSend = (sendFileStruct *)data;
   FILE *fp;
   size_t filenameSize = strlen(dataSend->filename);
 
@@ -231,7 +277,7 @@ void * prepareSendingFile(void* data){
   fp = fopen(dataSend->path, "rb");
   if (fp == NULL)
   {
-      redMessage("The file doesn't exist !\n");
+    redMessage("The file doesn't exist !\n");
   }
   else
   {
@@ -244,28 +290,29 @@ void * prepareSendingFile(void* data){
     if (send(dataSend->client, &structSize, sizeof(int), 0) == -1) // send the size of the struct
     {
       redErrorMessage("Error in sending struct size\n");
-      }
+    }
 
-      if (send(dataSend->client, file, structSize, 0) == -1) // send the struct
-      {
-          redErrorMessage("Error in sending struct size\n");
-      }
+    if (send(dataSend->client, file, structSize, 0) == -1) // send the struct
+    {
+      redErrorMessage("Error in sending struct size\n");
+    }
 
-      /* in comment because the client already has the name unless he selects it by an ID
-      if (send(dataSend->client, dataSend->filename, file->filenameSize, 0) == -1) // send the filename
-      {
-          redErrorMessage("Error in sending filename\n");
-      }
-      */
+    /* in comment because the client already has the name unless he selects it by an ID
+    if (send(dataSend->client, dataSend->filename, file->filenameSize, 0) == -1) // send the filename
+    {
+        redErrorMessage("Error in sending filename\n");
+    }
+    */
 
-      sendFile(dataSend->client, file, dataSend->filename);
+    sendFile(dataSend->client, file, dataSend->filename);
   }
-    return NULL;
+  return NULL;
 }
 
 // transfer the file to the user
-void sendFile(int client, fileStruct* file, char* name){
-  
+void sendFile(int client, fileStruct *file, char *name)
+{
+
   FILE *fp;
   char buffer[SIZE];
   fileStruct *fileData = file;
@@ -281,24 +328,23 @@ void sendFile(int client, fileStruct* file, char* name){
   int count;
   for (int i = 0; i < fileSize; i += SIZE) // send file block by block until there are no more byts to send
   {
-      if (i + SIZE < fileSize) // Calculate the size of the block to send
-      {
-          count = SIZE;
-      }
-      else
-      {
-          count = fileSize - i;
-      }
+    if (i + SIZE < fileSize) // Calculate the size of the block to send
+    {
+      count = SIZE;
+    }
+    else
+    {
+      count = fileSize - i;
+    }
 
-      fread(buffer, count, 1, fp);                       // read the file
-      if (send(client, buffer, sizeof(buffer), 0) == -1) // send the block of bytes to the server
-      {
-          perror("Error in sending file.");
-          exit(1);
-      }
-      bzero(buffer, SIZE); // Reset the buffer
+    fread(buffer, count, 1, fp);                       // read the file
+    if (send(client, buffer, sizeof(buffer), 0) == -1) // send the block of bytes to the server
+    {
+      perror("Error in sending file.");
+      exit(1);
+    }
+    bzero(buffer, SIZE); // Reset the buffer
   }
   fclose(fp); // Close the file
   greenMessage("File send succesfully\n");
-
 }

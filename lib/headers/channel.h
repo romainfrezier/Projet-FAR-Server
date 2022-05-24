@@ -10,8 +10,9 @@ typedef struct ChannelList ChannelList;
 
 struct Channel {
     int port;
-    char* name;
-    List* clients;
+    char *name;
+    char *theme;
+    List *clients;
     Channel* next;
     pthread_t thread;
     ChannelList *channelList;
@@ -29,7 +30,7 @@ struct ChannelList
 ChannelList *createChannelList(int size);
 void addLastChannel(ChannelList *list, Channel *channel);
 int channelListIsEmpty(ChannelList *list);
-Channel *createChannel(char *name, int port, pthread_t thread, int size, rk_sema semaphore, pthread_mutex_t mutex);
+Channel *createChannel(char *name, char* theme, int port, pthread_t thread, int size, rk_sema semaphore, pthread_mutex_t mutex);
 char *listChannel(ChannelList *list, int client);
 Channel *getChannelByIndex(ChannelList *list, int index);
 int pseudoInAllChannel(ChannelList *list, char *pseudo);
