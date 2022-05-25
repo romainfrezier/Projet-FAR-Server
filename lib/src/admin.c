@@ -33,9 +33,8 @@ void kick(char *message, int client, List *sockets, rk_sema semaphore, pthread_m
             int idKickedClient = getIdByPseudo(sockets, mess[1]);
             if (idKickedClient != -1)
             {
-                sendSpecificMessage(idKickedClient, "\n\033[0;31mYou are not an admin ! \n");
                 printf("User %d has been kicked by admin %d \n", idKickedClient, client);
-                userQuit(idKickedClient, sockets,semaphore,mutex);
+                userQuit(idKickedClient, sockets, semaphore, mutex);
             }
             else
             {
@@ -44,7 +43,7 @@ void kick(char *message, int client, List *sockets, rk_sema semaphore, pthread_m
         }
         else
         {
-            sendSpecificMessage(client, "You don't have the permission !");
+            sendSpecificMessage(client, "\n\033[0;31mYou are not an admin ! \n");
         }
     }
     else

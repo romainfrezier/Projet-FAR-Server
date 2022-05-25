@@ -60,16 +60,24 @@ char* listChannel(ChannelList* list, int client){
     char *finalString = (char *)malloc(strlen(start));
     strcat(finalString, start);
     int count = 1;
-
+    int sizeBuffer = 50;
+    char *name= (char*)malloc(sizeBuffer);
+    char *theme = (char*)malloc(sizeBuffer);
     while (current != NULL)
     {
-        char* name = (char*)malloc(strlen(current->name));
+        if (strlen(current->name)>sizeBuffer)
+        {
+            name = realloc(name,strlen(current->name));
+        }
+        if (strlen(current->theme)>sizeBuffer)
+        {
+            theme = realloc(theme,strlen(current->name));
+        }
+
         strcpy(name, current->name);
-        char* theme = (char*)malloc(strlen(current->theme));
         strcpy(theme, current->theme);
         size_t size = strlen(name) + strlen("\t00. : \n") + strlen(theme);
-        char *line = (char *)malloc(size);
-        bzero(line, size);
+        char *line = (char*)malloc(size);
         char *number;
         asprintf(&number, "%d", count);
         strcat(line, "\t");
@@ -95,7 +103,8 @@ char* listChannel(ChannelList* list, int client){
         current = current->next;
         count ++;
     }
-
+//    free(name);
+//    free(theme);
     return finalString;
 }
 
@@ -171,6 +180,7 @@ char *getAllUsers(ChannelList *list, int client, List* clients)
             final = realloc(final, strlen(final) + strlen(realStart));
             strcat(final, realStart);
             current = current->next;
+//            free(realStart);
         }
         return final;
     }

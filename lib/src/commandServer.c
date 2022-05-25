@@ -202,10 +202,8 @@ int checkCensorship(char *message)
     fclose(fp);
     free(line);
 
-    regex_t regex;
-    int regexRes;
-    regexRes = regcomp(&regex, model, REG_EXTENDED);
-    regexRes = regexec(&regex, message, 0, NULL, 0);
+    int regexRes = regex(message, model);
+//    free(model);
     if (regexRes == 0)
     {
         return 1;
@@ -236,8 +234,6 @@ void sendPrivateMessage(char *msg, int client, List *sockets)
     if (countSpaceCommand(msg, 2) == 1)
     {
         char **mess = str_split(msg, 3);
-        char *cmd = (char *)malloc(strlen(mess[0]));
-        cmd = mess[0];
         char *target = mess[1];
         int id = getIdByPseudo(sockets, target);
         if (id != -1)
@@ -246,8 +242,6 @@ void sendPrivateMessage(char *msg, int client, List *sockets)
             char *pmPseudo = (char *)malloc(sizeof(char) * (strlen(pseudo) + strlen("(pm) ")));
             strcat(pmPseudo, "(pm) ");
             strcat(pmPseudo, pseudo);
-            int commandSize = sizeof(cmd);
-            int idSize = sizeof(target);
             tss *sendData = (tss *)malloc(sizeof(tss));
             (*sendData).client = id;
             (*sendData).size = strlen(mess[2]) + 1;
@@ -255,6 +249,7 @@ void sendPrivateMessage(char *msg, int client, List *sockets)
             (*sendData).pseudoSender = pmPseudo;
             pthread_t send;
             pthread_create(&send, NULL, transmitMessage, (void *)sendData);
+//            free(pmPseudo);
         }
         else
         {
@@ -286,6 +281,7 @@ void * transmitMessage(void *sock_client)
     // Transmit message size
     sendSpecificMessage((*sock_cli).client, messageTransmited);
     greenMessage("Message transmitted\n");
+//    free(messageTransmited);
     return NULL;
 }
 
@@ -311,6 +307,7 @@ void addWord(char *message, List* clients, int client){
         fp = fopen("lib/censorship_words.txt","a");
         fprintf(fp,"%s", wordToAdd);
         fclose(fp);
+//        free(wordToAdd);
     }
     else
     {

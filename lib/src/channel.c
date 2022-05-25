@@ -29,13 +29,14 @@ Channel *createChannel(char *name, char *theme, int port, pthread_t thread, int 
 void *createNewChannel(void *cmd)
 {
     char *arr[3];
-    getRegexGroup(arr, 3, cmd, "/cchannel +([^ ]+) +(.+) *$");
+    char *message = (char*)cmd;
+    getRegexGroup(arr, 3, message, "/cchannel +([^ ]+) +(.+) *$");
     // char **msg = str_split(cmd, 3);
     prepareGenerateChannel(arr[1], arr[2]);
     return NULL;
 }
 
-// Allows the server to stop and stop all the user connected
+// Allows the channel to stop and stop all the user connected
 void channelQuit(List *sockets, rk_sema sem, pthread_mutex_t mutexList)
 {
     // Shutdown of all user sockets
@@ -147,6 +148,8 @@ void joinChannel(char *msg, ChannelList *channelList, int idClient, List *client
 
         // We send the port to the client
         sendSpecificMessage(idClient, sendCommand);
+//        free(portString);
+//        free(sendCommand);
     }
 }
 
@@ -196,6 +199,9 @@ void removeChannel(char *msg, ChannelList *channelList, int client, List *client
             current = current->next;
         }
         channelQuit(chosenChannel->clients, chosenChannel->semaphore, chosenChannel->mutex);
+//        free(chosenChannel->theme);
+//        free(chosenChannel->name);
+//        free(chosenChannel);
         delChannel(channelList, index);
     }
 }

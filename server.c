@@ -190,6 +190,10 @@ void *receiveMessage(void *sock_client)
     addFirst(sock_cli->clients, sock_cli->client, pseudo);
     pthread_mutex_unlock(&(sock_cli->mutex));
     printf("User connected with id : %d\n", sock_cli->client);
+    // malloc() and free() are not thread-safe functions.
+    // We need to protect the calls to those functions with a mutex.
+    // This one is a problem
+    //free(pseudo);
   }
   while (1)
   {
@@ -254,7 +258,10 @@ void *receiveMessage(void *sock_client)
         current = current->next;
       }
     }
-    // free(msg);
+    // malloc() and free() are not thread-safe functions.
+    // We need to protect the calls to those functions with a mutex.
+    // This one is a problem
+    //free(msg);
   }
   return NULL;
 }

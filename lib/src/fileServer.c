@@ -84,7 +84,7 @@ void *fileTransferReception(void *receiveFileData)
   char buffer[SIZE];
   int recvBuffer;
 
-  char *folder = "serverStorage/";
+  char *folder = "./serverStorage/";
   char *path = (char *)malloc((strlen(folder) + strlen(filename)) * sizeof(char));
   strcat(path, folder);
   strcat(path, filename);
@@ -104,19 +104,20 @@ void *fileTransferReception(void *receiveFileData)
       count = fileSize - i;
     }
 
-    recvBuffer = recv(socket, buffer, SIZE, 0); // receive the block of bytes from the user
+    recvBuffer = recv(socket, buffer, count, 0); // receive the block of bytes from the user
     if (recvBuffer <= 0)
     {
       perror("Error in receiving buffer.");
       exit(1);
     }
     fwrite(buffer, sizeof(buffer), 1, fprecv); // write file
-    bzero(buffer, SIZE);
+    bzero(buffer, count);
   }
   greenMessage("File written as ");
   greenMessage(path);
   printf("\n");
   fclose(fprecv);
+//  free(path);
   return NULL;
 }
 
@@ -141,6 +142,7 @@ char *listFile(char *folder)
         strcat(filename, "\n");
         finalString = (char *)realloc(finalString, (strlen(finalString) + strlen(filename)) * sizeof(char));
         strcat(finalString, filename);
+//        free(filename);
       }
     }
     closedir(d);
@@ -153,7 +155,7 @@ char *chooseNameFile(char *nameFile,int i)
     DIR *d;
     struct dirent *dir;
     int found = 1;
-    d = opendir("./serverStorage");
+    d = opendir("./serverStorage/");
     while ((dir = readdir(d)) != NULL && found != 0)
     {
         if (strcmp(nameFile, dir->d_name) == 0)
@@ -183,6 +185,9 @@ char *chooseNameFile(char *nameFile,int i)
         strcpy(newFilename,cpy);
         strcat(newFilename, format);
         strcat(newFilename, arr[2]);
+//        free(cpy);
+//        free(number);
+//        free(format);
         return chooseNameFile(newFilename, i+1);
     }
     else
@@ -257,6 +262,11 @@ void *fileSendThreadFunc(void *arg)
         pthread_create(&sendFileThread, NULL, prepareSendingFile, data);
       }
     }
+// malloc() and free() are not thread-safe functions.
+// We need to protect the calls to those functions with a mutex.
+// These are a problem
+//    free(path);
+//    free(filename);
   }
 
   free(arg);
@@ -343,8 +353,9 @@ void sendFile(int client, fileStruct *file, char *name)
       perror("Error in sending file.");
       exit(1);
     }
-    bzero(buffer, SIZE); // Reset the buffer
+    bzero(buffer, count); // Reset the buffer
   }
   fclose(fp); // Close the file
+//  free(path);
   greenMessage("File send succesfully\n");
 }
