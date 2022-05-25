@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "../headers/channel.h"
-#include "../headers/list.h"
 
 ChannelList* createChannelList(int size){
     ChannelList* newChannelList = (ChannelList*)malloc(sizeof(ChannelList));

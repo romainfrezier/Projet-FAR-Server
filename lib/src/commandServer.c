@@ -59,7 +59,7 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     }
     else if (strcmp(strto, "/luser") == 0)
     {
-        printf("Go to displayUsers function \n");
+        printf("Go to getAllChannelUsers function \n");
         sendSpecificMessage((*sock_cli).client, getAllChannelUsers((*sock_cli).clients, (*sock_cli).client, "\nUsers connected in this channel : \n\n"));
     }
     else if (strcmp(strto, "/luser-all") == 0)
@@ -106,6 +106,9 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
         printf("Go to all sendAllMessage function \n");
         sendAllMessage(msg, channelList, (*sock_cli).clients, (*sock_cli).client);
     }
+    else if (strcmp(strto, "/shutdown") == 0){
+        shutdownServer(channelList, (*sock_cli).clients, (*sock_cli).client);
+    }
     else
     {
         sendSpecificMessage((*sock_cli).client, "\nThis is an unknown command !\n");
@@ -126,11 +129,28 @@ void displayAllUsers(ChannelList *list, int client, List *clients)
     }
 }
 
-void sendAllMessage(char* msg, ChannelList* channelList, List* clients, int client){
+void sendAllMessage(char* msg, ChannelList* channelList, List* clients, int client)
+{
     if (isUserAdmin(clients, client) == 1){
         sendAllUsersMessage(channelList, msg);
     }
     else {
+        sendSpecificMessage(client, "\n\033[0;31mYou are not an admin ! \n");
+    }
+}
+
+void shutdownServer(ChannelList* channelList, List* clients, int client)
+{
+    if (isUserAdmin(clients, client) == 1)
+    {
+        printf("Go to all sendAllMessage function \n");
+        sendAllMessage("/all An admin decide to shutdown the server", channelList, clients, client);
+        printf("Go to all shutdown function \n");
+        sleep(1);
+        serverQuit(2);
+    }
+    else
+    {
         sendSpecificMessage(client, "\n\033[0;31mYou are not an admin ! \n");
     }
 }

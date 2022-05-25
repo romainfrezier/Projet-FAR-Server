@@ -13,9 +13,8 @@ void renameUser(char *msg, int client, List *sockets);                        //
 void sendPrivateMessage(char *msg, int client, List *sockets);
 void * transmitMessage(void *sock_client);
 void sendSpecificNumber(int client, int number);
-int regex(char *model, char *entry);
-void getRegexGroup (char *list[],int n, char *message, char *regexString);
 void sendAllMessage(char* msg, ChannelList* channelList, List* clients, int client);
 void displayAllUsers(ChannelList *list, int client, List *clients);
+void shutdownServer(ChannelList* channelList, List* clients, int client);
 
 #endif // COMMANDSERVER_H_

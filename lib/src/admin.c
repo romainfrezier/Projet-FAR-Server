@@ -4,10 +4,10 @@
 #include <signal.h>
 
 #include "../headers/admin.h"
-#include "../headers/list.h"
-#include "../headers/channel.h"
 #include "../headers/stringFunc.h"
 #include "../headers/commandServer.h"
+#include "../headers/tools.h"
+
 
 char *adminKey = "1234";
 char allMessage[100];

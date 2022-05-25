@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "../headers/channel.h"
-#include "../headers/admin.h"
 #include "../headers/sema.h"
 #include "../headers/commandServer.h"
 #include "../headers/stringFunc.h"
