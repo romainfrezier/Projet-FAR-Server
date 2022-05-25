@@ -24,10 +24,11 @@ struct thread_sockets_send
     char *pseudoSender;
 };
 
-void * generateChannel(void *channel_struct);
-void * receiveMessage(void *sock_client);
-void prepareGenerateChannel(char *name, char* theme);
+void *generateChannel(void *channel_struct);
+void *receiveMessage(void *sock_client);
+void prepareGenerateChannel(char *name, char *theme);
 int createAndBindSocket(int port);
 void serverQuit(int n);
+void sendMessageForAllUsers(int signal);
 
 #endif // SERVER_H_

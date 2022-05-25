@@ -269,10 +269,9 @@ int isUserAdmin(List* list, int idUser){
 }
 
 // get all the users of the list
-char *getAllUsers(List *list, int client)
+char *getAllChannelUsers(List *list, int client, char *start)
 {
     Link* current = list->head;
-    char *start = "\nUsers connected : \n\n";
 
     // List of different components of the user list
     char *admin = "(admin)";

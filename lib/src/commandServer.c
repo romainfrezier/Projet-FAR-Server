@@ -57,17 +57,22 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
         printf("Go to kick function\n");
         kick(msg, (*sock_cli).client, (*sock_cli).clients);
     }
-    else if (strcmp(strto, "/users") == 0)
+    else if (strcmp(strto, "/luser") == 0)
     {
         printf("Go to displayUsers function \n");
-        displayAllUsers((*sock_cli).client, (*sock_cli).clients);
+        sendSpecificMessage((*sock_cli).client, getAllChannelUsers((*sock_cli).clients, (*sock_cli).client, "\nUsers connected in this channel : \n\n"));
+    }
+    else if (strcmp(strto, "/luser-all") == 0)
+    {
+        printf("Go to displayAllUsers function \n");
+        displayAllUsers(channelList, (*sock_cli).client, (*sock_cli).clients);
     }
     else if (strcmp(strto, "/rename") == 0)
     {
         printf("Go to rename function \n");
         renameUser(msg, (*sock_cli).client, (*sock_cli).clients);
-    }
-    else if (strcmp(strto, "/files") == 0)
+    } 
+    else if (strcmp(strto, "/lfile") == 0)
     {
         printf("Go to list file function \n");
         sendSpecificMessage((*sock_cli).client, listFile("./serverStorage"));
@@ -77,7 +82,7 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
         printf("Go to list channel function \n");
         sendSpecificMessage((*sock_cli).client, listChannel(channelList, (*sock_cli).client));
     }
-    else if (strcmp(strto, "/channel") == 0)
+    else if (strcmp(strto, "/cchannel") == 0)
     {
         printf("Go to create channel function\n");
         checkChannel((*sock_cli).clients, (*sock_cli).client, channelList->freePlaces, msg);
@@ -97,13 +102,37 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
         printf("Go to remove channel function\n");
         removeChannel(msg, channelList, (*sock_cli).client, (*sock_cli).clients);
     }
+    else if (strcmp(strto, "/all") == 0){
+        printf("Go to all sendAllMessage function \n");
+        sendAllMessage(msg, channelList, (*sock_cli).clients, (*sock_cli).client);
+    }
+    else
+    {
+        sendSpecificMessage((*sock_cli).client, "\nThis is an unknown command !\n");
+    }
     return 0;
 }
 
-// send a message of all user of the chat server
-void displayAllUsers(int client, List *sockets)
+void displayAllUsers(ChannelList *list, int client, List *clients)
 {
-    sendSpecificMessage(client, getAllUsers(sockets, client));
+    char *listToSend = getAllUsers(list, client, clients);
+    if (listToSend == NULL)
+    {
+        sendSpecificMessage(client, "You are not admin !");
+    }
+    else
+    {
+        sendSpecificMessage(client, listToSend);
+    }
+}
+
+void sendAllMessage(char* msg, ChannelList* channelList, List* clients, int client){
+    if (isUserAdmin(clients, client) == 1){
+        sendAllUsersMessage(channelList, msg);
+    }
+    else {
+        sendSpecificMessage(client, "\n\033[0;31mYou are not an admin ! \n");
+    }
 }
 
 // Allows a user to leave the server

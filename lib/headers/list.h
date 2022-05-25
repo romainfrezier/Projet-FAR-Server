@@ -32,7 +32,7 @@ int getIdByPseudo(List *list, char *pseudo);        // get the id from the pseud
 char *getPseudoById(List *list, int id);            // get the pseudo from the id
 void setUserAdmin(List* list, int idClient);        // make a user as an admin
 int isUserAdmin(List *list, int idClient);          // check if the user is an admin
-char *getAllUsers(List *list, int client);          // get all the users of the list
+char *getAllChannelUsers(List *list, int client, char *start);          // get all the users of the list
 void setPseudo(List *list, int client, char* pseudo);// get all the users of the list
 Link *getClientById(List *list, int id);
 void changeACforJoin(List *list, int idClient);

@@ -8,12 +8,13 @@
 typedef struct Channel Channel;
 typedef struct ChannelList ChannelList;
 
-struct Channel {
+struct Channel
+{
     int port;
     char *name;
     char *theme;
     List *clients;
-    Channel* next;
+    Channel *next;
     pthread_t thread;
     ChannelList *channelList;
     rk_sema semaphore;
@@ -30,7 +31,7 @@ struct ChannelList
 ChannelList *createChannelList(int size);
 void addLastChannel(ChannelList *list, Channel *channel);
 int channelListIsEmpty(ChannelList *list);
-Channel *createChannel(char *name, char* theme, int port, pthread_t thread, int size, rk_sema semaphore, pthread_mutex_t mutex);
+Channel *createChannel(char *name, char *theme, int port, pthread_t thread, int size, rk_sema semaphore, pthread_mutex_t mutex);
 char *listChannel(ChannelList *list, int client);
 Channel *getChannelByIndex(ChannelList *list, int index);
 int pseudoInAllChannel(ChannelList *list, char *pseudo);
@@ -41,5 +42,7 @@ void checkChannel(List *clients, int client, int freePlaces, char *message);
 void joinChannel(char *msg, ChannelList *channelList, int client, List *clients);
 void modifyChannel(ChannelList *channelList, char *message, int client, List *clients);
 void removeChannel(char *msg, ChannelList *channelList, int client, List *clients);
+void sendMessageForAllUsersInChannel(int signal);
+char *getAllUsers(ChannelList *list, int client, List *clients);
 
 #endif // CHANNEL_H_

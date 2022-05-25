@@ -32,7 +32,25 @@ int main(int argc, char *argv[])
   printf("End program\n");
 }
 
-void prepareGenerateChannel(char *name, char* theme)
+void sendMessageForAllUsers(int signal)
+{
+  Channel *currentChannel = channelList->head;
+  while (currentChannel != NULL)
+  {
+    if (currentChannel->thread == pthread_self()){ //check if the thread is the current channel thread
+      Link *currentUser = currentChannel->clients->head;
+      while (currentUser != NULL)
+      {
+        sendSpecificMessage(currentUser->value, allMessage);
+        currentUser = currentUser->next;
+      }
+    }
+    currentChannel = currentChannel->next;
+  }
+  greenMessage("Message transmitted to all\n");
+}
+
+void prepareGenerateChannel(char *name, char *theme)
 {
   Channel *channelData = (Channel *)malloc(sizeof(Channel));
   channelData->port = (defaultPort + (channelCount * 5));
@@ -46,18 +64,17 @@ void prepareGenerateChannel(char *name, char* theme)
   pthread_join(channelThread, NULL);
 }
 
-void * generateChannel(void *channel)
+void *generateChannel(void *channel)
 {
   rk_sema sem;
   rk_sema_init(&sem, MAX_CONNEXION);
   pthread_mutex_t mutexList = PTHREAD_MUTEX_INITIALIZER;
-  
+
   Channel *channelData = (Channel *)channel;
   Channel *channelCreated = createChannel(channelData->name, channelData->theme, channelData->port, channelData->thread, MAX_CONNEXION, sem, mutexList);
   addLastChannel(channelList, channelCreated);
 
   int port = (*channelCreated).port;
-
 
   printf("Start channel\n");
 
@@ -86,6 +103,7 @@ void * generateChannel(void *channel)
   *argSend = dSFileSend;
   pthread_t fileSendThread;
   pthread_create(&fileSendThread, NULL, fileSendThreadFunc, argSend);
+  signal(SIGCHLD, sendMessageForAllUsers);
   while (1)
   {
     // Users are accepted until max allow
@@ -94,7 +112,7 @@ void * generateChannel(void *channel)
     int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
     Link *current = (*channelCreated).clients->head;
     while ((current != NULL) && (current->alreadyConnected != 1))
-    { 
+    {
       current = current->next;
     }
 
@@ -131,7 +149,7 @@ void * generateChannel(void *channel)
 }
 
 // Reception of a client message
-void * receiveMessage(void *sock_client)
+void *receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;
   Link *client = getClientById((*sock_cli).clients, (*sock_cli).client);
@@ -241,7 +259,8 @@ void * receiveMessage(void *sock_client)
   return NULL;
 }
 
-int createAndBindSocket(int port){
+int createAndBindSocket(int port)
+{
   int enable = 1;
   int dS = socket(PF_INET, SOCK_STREAM, 0);
   if (dS < 0)
@@ -260,7 +279,8 @@ int createAndBindSocket(int port){
   return dS;
 }
 
-void serverQuit(int n){
+void serverQuit(int n)
+{
   Channel *current = channelList->head;
   while (current != NULL)
   {

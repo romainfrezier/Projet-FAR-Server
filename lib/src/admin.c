@@ -1,12 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "../headers/admin.h"
+#include "../headers/list.h"
+#include "../headers/channel.h"
 #include "../headers/stringFunc.h"
 #include "../headers/commandServer.h"
 
-char* adminKey = "1234";
+char *adminKey = "1234";
+char allMessage[100];
 
 // generate a random admin key
 void generateAdminKey(char *key)
@@ -19,7 +23,7 @@ void generateAdminKey(char *key)
 }
 
 // remove a user from the chat server
-void kick(char *message, int client, List* sockets)
+void kick(char *message, int client, List *sockets)
 {
     if (countSpaceCommand(message, 1) == 1)
     {
@@ -50,8 +54,23 @@ void kick(char *message, int client, List* sockets)
     }
 }
 
+void sendAllUsersMessage(ChannelList *channels, char *message)
+{
+    strcpy(allMessage, "");
+    char* msg[2];
+    getRegexGroup(msg, 2, message, "^/all *(.*)$");
+    strcat(allMessage, "(ALL) ");
+    strcat(allMessage, msg[1]);
+    Channel *currentChannel = channels->head;
+    while (currentChannel != NULL)
+    {
+        pthread_kill(currentChannel->thread, SIGCHLD);
+        currentChannel = currentChannel->next;
+    }
+}
+
 // check the password give by a user
-void adminVerification(char *message, int client, List* sockets)
+void adminVerification(char *message, int client, List *sockets)
 {
     if (countSpaceCommand(message, 1) == 1)
     {

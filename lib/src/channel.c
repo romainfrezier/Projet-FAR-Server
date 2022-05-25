@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "../headers/channel.h"
+#include "../headers/admin.h"
 #include "../headers/sema.h"
 #include "../headers/commandServer.h"
 #include "../headers/stringFunc.h"
@@ -29,7 +30,7 @@ Channel *createChannel(char *name, char *theme, int port, pthread_t thread, int 
 void *createNewChannel(void *cmd)
 {
     char *arr[3];
-    getRegexGroup(arr, 3, cmd, "/channel +([^ ]+) +(.+) *$");
+    getRegexGroup(arr, 3, cmd, "/cchannel +([^ ]+) +(.+) *$");
     // char **msg = str_split(cmd, 3);
     prepareGenerateChannel(arr[1], arr[2]);
     return NULL;
@@ -48,6 +49,7 @@ void channelQuit(List *sockets, rk_sema sem, pthread_mutex_t mutexList)
     }
 }
 
+
 void modifyChannel(ChannelList *channelList, char *message, int client, List *clients)
 {
     char *arrOne[4];
@@ -62,7 +64,8 @@ void modifyChannel(ChannelList *channelList, char *message, int client, List *cl
         if (strcmp(arrOne[1], "n") == 0)
         {
             int index = atoi(arrOne[2]);
-            if (index == 1){
+            if (index == 1)
+            {
                 sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
             }
             else
@@ -74,7 +77,8 @@ void modifyChannel(ChannelList *channelList, char *message, int client, List *cl
         else if (strcmp(arrTwo[1], "t") == 0)
         {
             int index = atoi(arrTwo[2]);
-            if (index == 1){
+            if (index == 1)
+            {
                 sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
             }
             else
@@ -86,7 +90,8 @@ void modifyChannel(ChannelList *channelList, char *message, int client, List *cl
         else if (strcmp(arrThree[1], "tn") == 0 || strcmp(arrThree[1], "nt") == 0)
         {
             int index = atoi(arrThree[2]);
-            if (index == 1){
+            if (index == 1)
+            {
                 sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
             }
             else
@@ -113,27 +118,37 @@ void joinChannel(char *msg, ChannelList *channelList, int idClient, List *client
     char **cmd = str_split(msg, 1);
     int index = atoi(cmd[1]);
     Channel *chosenChannel = getChannelByIndex(channelList, index);
+    if (chosenChannel == NULL)
+    {
+        sendSpecificMessage(idClient, "\nThis channel does not exist !\n");
+    }
+    else if (pseudoInList(chosenChannel->clients, getPseudoById(clients, idClient)) == 0)
+    {
+        sendSpecificMessage(idClient, "\nYou already are in the channel !\n");
+    }
+    else
+    {
+        int port = chosenChannel->port;
+        char *portString = (char *)malloc(4 * sizeof(char));
+        sprintf(portString, "%d", port);
 
-    int port = chosenChannel->port;
-    char *portString = (char *)malloc(4 * sizeof(char));
-    sprintf(portString, "%d", port);
+        char *sendCommand = (char *)malloc(strlen(portString) + strlen(cmd[0]) + 1);
+        strcpy(sendCommand, cmd[0]);
+        strcat(sendCommand, " ");
+        strcat(sendCommand, portString);
 
-    char *sendCommand = (char *)malloc(strlen(portString) + strlen(cmd[0]) + 1);
-    strcpy(sendCommand, cmd[0]);
-    strcat(sendCommand, " ");
-    strcat(sendCommand, portString);
+        // We add to the client to the good channel
+        changeACforJoin(clients, idClient);
+        Link *client = getClientById(clients, idClient);
+        char *clientPseudo = getPseudoById(clients, idClient);
+        addFirstClient(chosenChannel->clients, client, clientPseudo);
 
-    // We add to the client to the good channel
-    changeACforJoin(clients, idClient);
-    Link *client = getClientById(clients, idClient);
-    char *clientPseudo = getPseudoById(clients, idClient);
-    addFirstClient(chosenChannel->clients, client, clientPseudo);
+        // We delete from this channel the good client
+        delVal(clients, idClient);
 
-    // We delete from this channel the good client
-    delVal(clients, idClient);
-
-    // We send the port to the client
-    sendSpecificMessage(idClient, sendCommand);
+        // We send the port to the client
+        sendSpecificMessage(idClient, sendCommand);
+    }
 }
 
 void checkChannel(List *clients, int client, int freePlaces, char *message)
@@ -146,7 +161,7 @@ void checkChannel(List *clients, int client, int freePlaces, char *message)
         }
         else
         {
-            int resRegex = regex(message, "/channel +([^ ]+) +(.+) *$");
+            int resRegex = regex(message, "/cchannel +([^ ]+) +(.+) *$");
             if (resRegex == 0)
             {
                 pthread_t createChannelThread;
@@ -154,7 +169,7 @@ void checkChannel(List *clients, int client, int freePlaces, char *message)
             }
             else
             {
-                sendSpecificMessage(client, "\nThe command is /channel channelName channelTheme !\n");
+                sendSpecificMessage(client, "\nThe command is /cchannel channelName channelTheme !\n");
             }
         }
     }

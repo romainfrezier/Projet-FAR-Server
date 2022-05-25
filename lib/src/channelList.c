@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "../headers/channel.h"
+#include "../headers/list.h"
 
 ChannelList* createChannelList(int size){
     ChannelList* newChannelList = (ChannelList*)malloc(sizeof(ChannelList));
@@ -56,7 +57,7 @@ void addLastChannel(ChannelList* list, Channel* channel)
 char* listChannel(ChannelList* list, int client){
     Channel *current = list->head;
 
-    char *start = "\nList of channel(s) : \n";
+    char *start = "\nList of channel(s) : \n\n";
     char *finalString = (char *)malloc(strlen(start));
     strcat(finalString, start);
     int count = 1;
@@ -148,4 +149,34 @@ void delChannel(ChannelList *list, int index){
         free(deleted);
     }
     
+}
+
+char *getAllUsers(ChannelList *list, int client, List* clients)
+{
+    if (isUserAdmin(clients,client) == 1)
+    {
+        Channel *current = list->head;
+        char *start = "\nList of all users : ";
+        char *final = (char *)malloc(strlen(start));
+        strcat(final, start);
+        while (current != NULL)
+        {
+            char *channelStart = "\n\nUser of channel ";
+            char *realStart = (char *)malloc(strlen(channelStart) + strlen(current->name) + 5);
+            strcat(realStart, channelStart);
+            strcat(realStart, current->name);
+            strcat(realStart, " :\n");
+            char *userListChannel = getAllChannelUsers(current->clients, client, "\n");
+            realStart = realloc(realStart, strlen(realStart) + strlen(userListChannel));
+            strcat(realStart, userListChannel);
+            final = realloc(final, strlen(final) + strlen(realStart));
+            strcat(final, realStart);
+            current = current->next;
+        }
+        return final;
+    }
+    else
+    {
+        return NULL;
+    }
 }
