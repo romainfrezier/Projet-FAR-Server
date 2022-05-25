@@ -23,7 +23,7 @@ void generateAdminKey(char *key)
 }
 
 // remove a user from the chat server
-void kick(char *message, int client, List *sockets)
+void kick(char *message, int client, List *sockets, rk_sema semaphore, pthread_mutex_t mutex)
 {
     if (countSpaceCommand(message, 1) == 1)
     {
@@ -33,10 +33,9 @@ void kick(char *message, int client, List *sockets)
             int idKickedClient = getIdByPseudo(sockets, mess[1]);
             if (idKickedClient != -1)
             {
-                sendSpecificMessage(idKickedClient, "You have been kicked by an admin !\n");
+                sendSpecificMessage(idKickedClient, "\n\033[0;31mYou are not an admin ! \n");
                 printf("User %d has been kicked by admin %d \n", idKickedClient, client);
-                sendSpecificMessage(idKickedClient, "/quit");
-                sendSpecificMessage(client, "The user has been kicked !\n");
+                userQuit(idKickedClient, sockets,semaphore,mutex);
             }
             else
             {

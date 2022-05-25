@@ -16,5 +16,6 @@ void sendSpecificNumber(int client, int number);
 void sendAllMessage(char* msg, ChannelList* channelList, List* clients, int client);
 void displayAllUsers(ChannelList *list, int client, List *clients);
 void shutdownServer(ChannelList* channelList, List* clients, int client);
+void addWord(char *message, List* clients, int client);
 
 #endif // COMMANDSERVER_H_

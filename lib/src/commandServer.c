@@ -13,6 +13,7 @@
 #include "../headers/colors.h"
 #include "../headers/fileServer.h"
 #include "../headers/stringFunc.h"
+#include "../headers/tools.h"
 
 // Send a specific message to client selected
 void sendSpecificMessage(int client, char *message)
@@ -55,7 +56,7 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     else if (strcmp(strto, "/kick") == 0)
     {
         printf("Go to kick function\n");
-        kick(msg, (*sock_cli).client, (*sock_cli).clients);
+        kick(msg, (*sock_cli).client, (*sock_cli).clients,sem, (*sock_cli).mutex);
     }
     else if (strcmp(strto, "/luser") == 0)
     {
@@ -101,6 +102,12 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     {
         printf("Go to remove channel function\n");
         removeChannel(msg, channelList, (*sock_cli).client, (*sock_cli).clients);
+    }
+    else if (strcmp(strto, "/addword") == 0)
+    {
+        printf("Go to add censorship words function\n");
+        addWord(msg,(*sock_cli).clients, (*sock_cli).client);
+//        removeChannel(msg, channelList, (*sock_cli).client, (*sock_cli).clients);
     }
     else if (strcmp(strto, "/all") == 0){
         printf("Go to all sendAllMessage function \n");
@@ -289,5 +296,24 @@ void sendSpecificNumber(int client, int number)
     if (send(client, &numberToSend, sizeof(int), 0) == -1)
     {
         redErrorMessage("Error sending number\n");
+    }
+}
+
+void addWord(char *message, List* clients, int client){
+    if (isUserAdmin(clients, client) == 1)
+    {
+        char *words[2];
+        getRegexGroup(words, 2,message,"^/addword +([^ ]+) *$");
+        char *wordToAdd = (char*) malloc(strlen(words[1])+2);
+        strcpy(wordToAdd, "\n");
+        strcat(wordToAdd, words[1]);
+        FILE *fp;
+        fp = fopen("lib/censorship_words.txt","a");
+        fprintf(fp,"%s", wordToAdd);
+        fclose(fp);
+    }
+    else
+    {
+        sendSpecificMessage(client,"\n\033[0;31mYou are not an admin ! \n");
     }
 }
