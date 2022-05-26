@@ -1,3 +1,14 @@
+/**
+ * @file commandServer.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief Command management functions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include <stdio.h>
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -76,7 +87,7 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     else if (strcmp(strto, "/lfile") == 0)
     {
         printf("Go to list file function \n");
-        sendSpecificMessage((*sock_cli).client, listFile("./serverStorage"));
+        sendSpecificMessage((*sock_cli).client, listFile("./serverStorage/"));
     }
     else if (strcmp(strto, "/lchannel") == 0)
     {

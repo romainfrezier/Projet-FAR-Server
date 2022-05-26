@@ -1,3 +1,14 @@
+/**
+ * @file fileServer.h
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief File functions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include <stdio.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -56,6 +67,7 @@ void *fileGetThreadFunc(void *arg)
   free(arg);
   // File thread shutdown
   shutdown(socket, 2);
+  return NULL;
 }
 
 // prepare the receiving of the file
@@ -129,7 +141,7 @@ char *listFile(char *folder)
   char *fileList = "\nList of server files : \n\n";
   char *finalString = (char *)malloc(strlen(fileList));
   strcpy(finalString, fileList);
-  d = opendir("./serverStorage");
+  d = opendir(folder);
   if (d)
   {
     while ((dir = readdir(d)) != NULL)
@@ -273,6 +285,7 @@ void *fileSendThreadFunc(void *arg)
 
   // File thread shutdown
   shutdown(socket, 2);
+    return NULL;
 }
 
 // prepare the sending of the file

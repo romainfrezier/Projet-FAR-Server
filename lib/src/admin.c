@@ -1,3 +1,14 @@
+/**
+ * @file admin.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief Admin functions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,17 +23,17 @@
 char *adminKey = "1234";
 char allMessage[100];
 
-// generate a random admin key
-void generateAdminKey(char *key)
+char* generateAdminKey()
 {
+    char* key = (char*) malloc(10);
     for (int i = 0; i < 10; i++)
     {
         char randomletter = 'A' + (rand() % 26);
         strcat(key, &randomletter);
     }
+    return key;
 }
 
-// remove a user from the chat server
 void kick(char *message, int client, List *sockets, rk_sema semaphore, pthread_mutex_t mutex)
 {
     if (countSpaceCommand(message, 1) == 1)

@@ -1,3 +1,14 @@
+/**
+ * @file list.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief list of clients functions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +40,7 @@ int listIsEmpty(List *list)
 }
 
 // add a user to the first position of the list
-void addFirst(List *list, int value, char *pseudo)
+void addFirst(List *list, int id, char *pseudo)
 {
     if (list->size == 0)
     {
@@ -37,8 +48,8 @@ void addFirst(List *list, int value, char *pseudo)
     }
     else
     {
-        Link *link = (Link *)malloc(sizeof(Link));
-        link->value = value;
+        Client *link = (Client *)malloc(sizeof(Client));
+        link->id = id;
         link->pseudo = pseudo;
         link->admin = -1;
         link->alreadyConnected = 0;
@@ -56,7 +67,7 @@ void addFirst(List *list, int value, char *pseudo)
     }
 }
 
-void addFirstClient(List *list, Link *client, char *pseudo)
+void addFirstClient(List *list, Client *client, char *pseudo)
 {
     if (list->size == 0)
     {
@@ -64,8 +75,8 @@ void addFirstClient(List *list, Link *client, char *pseudo)
     }
     else
     {
-        Link *link = (Link *)malloc(sizeof(Link));
-        link->value = client->value;
+        Client *link = (Client *)malloc(sizeof(Client));
+        link->id = client->id;
         link->pseudo = pseudo;
         link->admin = client->admin;
         link->alreadyConnected = client->alreadyConnected;
@@ -84,15 +95,15 @@ void addFirstClient(List *list, Link *client, char *pseudo)
 }
 
 // go to the next Link of the list
-Link *next(Link *link)
+Client *next(Client *client)
 {
-    if (link->next == NULL)
+    if (client->next == NULL)
     {
         return NULL;
     }
     else
     {
-        return link->next;
+        return client->next;
     }
 }
 
@@ -101,24 +112,24 @@ void delFirst(List *list)
 {
     if (list->head != NULL)
     {
-        Link *deleted = list->head;
+        Client *deleted = list->head;
         list->head = list->head->next;
         free(deleted);
     }
 }
 
 // delete an element of the list passed in arguments
-void delVal(List *list, int val)
+void delVal(List *list, int id)
 {
     if (listIsEmpty(list) == 1)
     {
-        if (list->head->value == val)
+        if (list->head->id == id)
         {
             delFirst(list);
         }
         else
         {
-            delValAux(list->head, val);
+            delValAux(list->head, id);
         }
         list->size = list->size + 1;
     }
@@ -129,19 +140,19 @@ void delVal(List *list, int val)
 }
 
 // recursive function to delete an element of the list
-void delValAux(Link *link, int val)
+void delValAux(Client *client, int id)
 {
-    if (link->next != NULL)
+    if (client->next != NULL)
     {
-        if (link->next->value == val)
+        if (client->next->id == id)
         {
-            Link *deleted = link->next;
-            link->next = link->next->next;
+            Client *deleted = client->next;
+            client->next = client->next->next;
             free(deleted);
         }
         else
         {
-            delValAux(link->next, val);
+            delValAux(client->next, id);
         }
     }
     else
@@ -155,7 +166,7 @@ int pseudoInList(List *list, char *pseudo)
 {
     if (listIsEmpty(list) == 1)
     {
-        Link *current = list->head;
+        Client *current = list->head;
         while (current != NULL && (strcmp(current->pseudo, pseudo) != 0))
         {
             current = current->next;
@@ -180,14 +191,14 @@ int getIdByPseudo(List *list, char *pseudo)
 {
     if (listIsEmpty(list) == 1)
     {
-        Link *current = list->head;
+        Client *current = list->head;
         while (current != NULL && (strcmp(current->pseudo, pseudo) != 0))
         {
             current = current->next;
         }
         if (current != NULL && (strcmp(current->pseudo, pseudo) == 0))
         {
-            return current->value;
+            return current->id;
         }
         else
         {
@@ -205,12 +216,12 @@ char *getPseudoById(List *list, int id)
 {
     if (listIsEmpty(list) == 1)
     {
-        Link *current = list->head;
-        while (current != NULL && id != current->value)
+        Client *current = list->head;
+        while (current != NULL && id != current->id)
         {
             current = current->next;
         }
-        if (current != NULL && current->value == id)
+        if (current != NULL && current->id == id)
         {
             return current->pseudo;
         }
@@ -230,10 +241,10 @@ void displayList(List *list)
 {
     if (listIsEmpty(list) == 1)
     {
-        Link *current = list->head;
+        Client *current = list->head;
         while (current != NULL)
         {    
-            printf("Pseudo : %s (id : %d)\n", current->pseudo, current->value);
+            printf("Pseudo : %s (id : %d)\n", current->pseudo, current->id);
             current = current->next;
         }
     }
@@ -245,8 +256,8 @@ void displayList(List *list)
 
 // make a user as an admin
 void setUserAdmin(List* list, int idUser){
-    Link* current = list->head;
-    while (current != NULL && current->value != idUser){
+    Client* current = list->head;
+    while (current != NULL && current->id != idUser){
         current = current->next;
     }
     if (current != NULL){
@@ -256,11 +267,11 @@ void setUserAdmin(List* list, int idUser){
 
 // check if the user is an admin
 int isUserAdmin(List* list, int idUser){
-    Link* current = list->head;
-    while (current != NULL && current->value != idUser){
+    Client* current = list->head;
+    while (current != NULL && current->id != idUser){
         current = current->next;
     }
-    if (current->value == idUser){
+    if (current->id == idUser){
         return current->admin;
     }
     else {
@@ -269,9 +280,9 @@ int isUserAdmin(List* list, int idUser){
 }
 
 // get all the users of the list
-char *getAllChannelUsers(List *list, int client, char *start)
+char *getAllChannelUsers(List *list, int idClient, char *start)
 {
-    Link* current = list->head;
+    Client* current = list->head;
 
     // List of different components of the user list
     char *admin = "(admin)";
@@ -287,7 +298,7 @@ char *getAllChannelUsers(List *list, int client, char *start)
     while(current != NULL){
         int taille = 0;
         char *stringUser;
-        if (current->admin == 1 && current->value == client)
+        if (current->admin == 1 && current->id == idClient)
         {
             stringUser = (char *)malloc(strlen(current->pseudo) + strlen(tab) + strlen(admin) + strlen(me) + strlen(space) + strlen(retn));
             strcat(stringUser, tab);
@@ -296,7 +307,7 @@ char *getAllChannelUsers(List *list, int client, char *start)
             strcat(stringUser, space);
             taille += strlen(tab) + strlen(admin) + strlen(me) + strlen(space) + strlen(retn);
         }
-        else if (current->value == client && current->admin != 1)
+        else if (current->id == idClient && current->admin != 1)
         {
             stringUser = (char *)malloc(strlen(current->pseudo) + strlen(tab) + strlen(me) + strlen(space) + strlen(retn));
             strcat(stringUser, tab);
@@ -304,7 +315,7 @@ char *getAllChannelUsers(List *list, int client, char *start)
             strcat(stringUser, space);
             taille += strlen(tab) + strlen(me) + strlen(space) + strlen(retn);
         }
-        else if (current->value != client && current->admin == 1)
+        else if (current->id != idClient && current->admin == 1)
         {
             stringUser = (char *)malloc(strlen(current->pseudo) + strlen(tab) + strlen(admin) + strlen(space) + strlen(retn));
             strcat(stringUser, tab);
@@ -328,21 +339,21 @@ char *getAllChannelUsers(List *list, int client, char *start)
     return users;
 }
 
-void setPseudo(List *list, int client, char *pseudo){
-    Link *current = list->head;
-    while (current != NULL && current->value != client)
+void setPseudo(List *list, int idClient, char *pseudo){
+    Client *current = list->head;
+    while (current != NULL && current->id != idClient)
     {
         current = current->next;
     }
-    if ((current != NULL) && (current->value == client))
+    if ((current != NULL) && (current->id == idClient))
     {
         current->pseudo = pseudo;
     }
 }
 
-Link* getClientById(List* list, int id){
-    Link *current = list->head;
-    while ((current != NULL) && (current->value != id))
+Client* getClientById(List* list, int id){
+    Client *current = list->head;
+    while ((current != NULL) && (current->id != id))
     {
         current = current->next;
     }
@@ -351,8 +362,8 @@ Link* getClientById(List* list, int id){
 
 void changeACforJoin(List* list, int idClient)
 {
-    Link *current = list->head;
-    while (current != NULL && current->value != idClient)
+    Client *current = list->head;
+    while (current != NULL && current->id != idClient)
     {
         current = current->next;
     }

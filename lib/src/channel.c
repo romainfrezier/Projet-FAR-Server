@@ -1,3 +1,14 @@
+/**
+ * @file channel.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief Channel functions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -40,11 +51,11 @@ void *createNewChannel(void *cmd)
 void channelQuit(List *sockets, rk_sema sem, pthread_mutex_t mutexList)
 {
     // Shutdown of all user sockets
-    Link *current = sockets->head;
+    Client *current = sockets->head;
     printf("\n");
     while (current != NULL)
     {
-        userQuit(current->value, sockets, sem, mutexList);
+        userQuit(current->id, sockets, sem, mutexList);
         current = current->next;
     }
 }
@@ -139,7 +150,7 @@ void joinChannel(char *msg, ChannelList *channelList, int idClient, List *client
 
         // We add to the client to the good channel
         changeACforJoin(clients, idClient);
-        Link *client = getClientById(clients, idClient);
+        Client *client = getClientById(clients, idClient);
         char *clientPseudo = getPseudoById(clients, idClient);
         addFirstClient(chosenChannel->clients, client, clientPseudo);
 
@@ -192,10 +203,10 @@ void removeChannel(char *msg, ChannelList *channelList, int client, List *client
     else
     {
         Channel *chosenChannel = getChannelByIndex(channelList, index);
-        Link *current = chosenChannel->clients->head;
+        Client *current = chosenChannel->clients->head;
         while (current != NULL)
         {
-            sendSpecificMessage(current->value, "The channel where you are will be removed.\nYou will be ejecting from the server");
+            sendSpecificMessage(current->id, "The channel where you are will be removed.\nYou will be ejecting from the server");
             current = current->next;
         }
         channelQuit(chosenChannel->clients, chosenChannel->semaphore, chosenChannel->mutex);

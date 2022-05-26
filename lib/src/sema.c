@@ -1,3 +1,15 @@
+/**
+ * @file sema.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief Libraries for semaphore are not the same on Linux and Apple devices
+ * @brief This library give the possibility to use functions on every devices
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
 #else

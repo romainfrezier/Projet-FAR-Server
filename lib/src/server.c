@@ -1,3 +1,14 @@
+/**
+ * @file server.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief Server actions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include <stdio.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -6,14 +17,14 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "lib/headers/sema.h"
-#include "lib/headers/server.h"
-#include "lib/headers/admin.h"
-#include "lib/headers/colors.h"
-#include "lib/headers/commandServer.h"
-#include "lib/headers/fileServer.h"
-#include "lib/headers/channel.h"
-#include "lib/headers/list.h"
+#include "../headers/sema.h"
+#include "../headers/server.h"
+#include "../headers/admin.h"
+#include "../headers/colors.h"
+#include "../headers/commandServer.h"
+#include "../headers/fileServer.h"
+#include "../headers/channel.h"
+#include "../headers/list.h"
 
 ChannelList *channelList;
 int maxChannel = 10;
@@ -38,10 +49,10 @@ void sendMessageForAllUsers(int signal)
   while (currentChannel != NULL)
   {
     if (currentChannel->thread == pthread_self()){ //check if the thread is the current channel thread
-      Link *currentUser = currentChannel->clients->head;
+      Client *currentUser = currentChannel->clients->head;
       while (currentUser != NULL)
       {
-        sendSpecificMessage(currentUser->value, allMessage);
+        sendSpecificMessage(currentUser->id, allMessage);
         currentUser = currentUser->next;
       }
     }
@@ -110,7 +121,7 @@ void *generateChannel(void *channel)
     // Wait for space in the user list
     rk_sema_wait(&sem);
     int acceptation = accept(dS, (struct sockaddr *)&aC, &lg);
-    Link *current = (*channelCreated).clients->head;
+    Client *current = (*channelCreated).clients->head;
     while ((current != NULL) && (current->alreadyConnected != 1))
     {
       current = current->next;
@@ -122,7 +133,7 @@ void *generateChannel(void *channel)
     }
     else
     {
-      current->value = acceptation;
+      current->id = acceptation;
     }
 
     changeACforJoin((*channelCreated).clients, acceptation);
@@ -136,11 +147,11 @@ void *generateChannel(void *channel)
     pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
   }
   // Shutdown of all user sockets
-  Link *current = (*channelCreated).clients->head;
+  Client *current = (*channelCreated).clients->head;
   do
   {
-    delVal((*channelCreated).clients, current->value);
-    shutdown(current->value, 2);
+    delVal((*channelCreated).clients, current->id);
+    shutdown(current->id, 2);
     current = current->next;
   } while (current->next != NULL);
 
@@ -152,7 +163,7 @@ void *generateChannel(void *channel)
 void *receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;
-  Link *client = getClientById((*sock_cli).clients, (*sock_cli).client);
+  Client *client = getClientById((*sock_cli).clients, (*sock_cli).client);
   if (client == NULL)
   {
     u_long sizePseudo;
@@ -240,14 +251,14 @@ void *receiveMessage(void *sock_client)
     {
       // Send to each user
       pthread_t send;
-      Link *current = sock_cli->clients->head;
+      Client *current = sock_cli->clients->head;
       displayList(sock_cli->clients);
       for (int i = 0; i < MAX_CONNEXION - sock_cli->clients->size; i++)
       {
-        if (current->value != (*sock_cli).client)
+        if (current->id != (*sock_cli).client)
         {
           tss *sendData = (tss *)malloc(sizeof(tss));
-          (*sendData).client = current->value;
+          (*sendData).client = current->id;
           (*sendData).size = size;
           (*sendData).message = msg;
           (*sendData).pseudoSender = getPseudoById(sock_cli->clients, (*sock_cli).client);

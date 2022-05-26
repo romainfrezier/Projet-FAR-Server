@@ -1,3 +1,14 @@
+/**
+ * @file stringFunc.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief String functions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include "../headers/stringFunc.h"
 
 // Split command, with loop and argument n for generalization. Return a table of string
