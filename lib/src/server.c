@@ -188,14 +188,22 @@ void *receiveMessage(void *sock_client)
     int check;
     do
     {
-      if (recv((*sock_cli).client, &sizePseudo, sizeof(u_long), 0) == -1)
+      int receive = recv((*sock_cli).client, &sizePseudo, sizeof(u_long), 0);
+      if (receive == 0)
       {
+        return NULL;
+      }
+      else if (receive == -1){
         redErrorMessage("Error message size received\n");
       }
       blueMessage("Size received\n");
       pseudo = (char *)malloc(sizeof(char) * sizePseudo);
-      if (recv((*sock_cli).client, pseudo, sizePseudo, 0) == -1)
+      receive = recv((*sock_cli).client, pseudo, sizePseudo, 0);
+      if (receive == 0)
       {
+        return NULL;
+      }
+      else if (receive == -1){
         redErrorMessage("Error message received\n");
       }
       blueMessage("Pseudo received : ");
@@ -228,21 +236,21 @@ void *receiveMessage(void *sock_client)
     u_long size;
     // Size reception
     int receive = recv((*sock_cli).client, &size, sizeof(u_long), 0);
-    if (receive == -1)
+    if (receive == 0)
+    {
+        redMessage("Connexion with user lost\n");
+        break;
+    }
+    else if (receive == -1)
     {
       redErrorMessage("Error message size received\n");
-    }
-    else if (receive == 0)
-    {
-      redMessage("Connexion with user lost\n");
-      break;
     }
 
     blueMessage("Size received\n");
 
     // Message reception
     char *msg = (char *)malloc(size);
-    if (recv((*sock_cli).client, msg, size, 0) == -1)
+    if (recv((*sock_cli).client, msg, size, 0) <= 0)
     {
       redErrorMessage("Error message received\n");
     }
