@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "../headers/channel.h"
 
@@ -137,6 +138,20 @@ Channel* getChannelByIndex(ChannelList* list, int index){
         }
     }
 
+}
+
+Channel *getCurrentChannel(ChannelList *channels)
+{
+    Channel *currentChannel = channels->head;
+    while (currentChannel != NULL)
+    {
+        if (currentChannel->thread == pthread_self())
+        {
+            break;
+        }
+        currentChannel = currentChannel->next;
+    }
+    return currentChannel;
 }
 
 int pseudoInAllChannel(ChannelList* list, char* pseudo){

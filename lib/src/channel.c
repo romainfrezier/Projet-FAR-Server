@@ -19,17 +19,20 @@
 #include "../headers/commandServer.h"
 #include "../headers/stringFunc.h"
 #include "../headers/tools.h"
+#include "../headers/form.h"
 
 Channel *createChannel(char *name, char *theme, int port, pthread_t thread, int size, rk_sema semaphore, pthread_mutex_t mutexList)
 {
     Channel *newChannel = (Channel *)malloc(sizeof(Channel));
     List *sockets = createList(size);
+    FormList *formList = createFormList(size);
     newChannel->name = (char *)malloc(100);
     newChannel->name = name;
     newChannel->theme = (char *)malloc(100);
     newChannel->theme = theme;
     newChannel->port = port;
     newChannel->clients = sockets;
+    newChannel->formList = formList;
     newChannel->thread = thread;
     newChannel->next = NULL;
     newChannel->semaphore = semaphore;

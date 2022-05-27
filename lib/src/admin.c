@@ -38,16 +38,13 @@ int kickedId;
 /**
  * @brief Mutex on all message
  */
-pthread_mutex_t allMessageMutex;
+pthread_mutex_t allMessageMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * @brief Mutex on kick user
  */
-pthread_mutex_t kickedIdMutex;
+pthread_mutex_t kickedIdMutex = PTHREAD_MUTEX_INITIALIZER;
 
-
-pthread_mutex_init(allMessageMutex);
-pthread_mutex_init(kickedIdMutex);
 
 char *generateAdminKey()
 {

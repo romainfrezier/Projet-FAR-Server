@@ -33,8 +33,7 @@ struct thread_sockets_receive
 {
     int client;
     List *clients;
-    rk_sema sem;
-    pthread_mutex_t mutex;
+    Channel *currentChannel;
 };
 
 /**

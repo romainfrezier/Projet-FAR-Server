@@ -171,8 +171,7 @@ void *generateChannel(void *channel)
     tsr *receiveData = (tsr *)malloc(sizeof(tsr));
     (*receiveData).client = acceptation;
     (*receiveData).clients = (*channelCreated).clients;
-    (*receiveData).sem = sem;
-    (*receiveData).mutex = mutexList;
+    (*receiveData).currentChannel = getCurrentChannel(channelList);
     pthread_t receive;
     pthread_create(&receive, NULL, receiveMessage, (void *)receiveData);
   }
@@ -234,9 +233,9 @@ void *receiveMessage(void *sock_client)
     printf("\n");
 
     // add the client to the socket list
-    pthread_mutex_lock(&(sock_cli->mutex));
+    pthread_mutex_lock(&(sock_cli->currentChannel->mutex));
     addFirst(sock_cli->clients, sock_cli->client, pseudo);
-    pthread_mutex_unlock(&(sock_cli->mutex));
+    pthread_mutex_unlock(&(sock_cli->currentChannel->mutex));
     printf("User connected with id : %d\n", sock_cli->client);
     // malloc() and free() are not thread-safe functions.
     // We need to protect the calls to those functions with a mutex.
@@ -278,7 +277,7 @@ void *receiveMessage(void *sock_client)
     else if (msg[0] == '/')
     {
       // Commands management
-      int checkCmd = checkCommand(msg, sock_cli, (*sock_cli).sem, channelList);
+      int checkCmd = checkCommand(msg, (*sock_cli).client, (*sock_cli).currentChannel, channelList);
       if (checkCmd == -1)
       {
         break;

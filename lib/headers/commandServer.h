@@ -34,7 +34,7 @@ void sendSpecificMessage(int client, char *message);
  * @return -1 -> the user make a /quit
  * @return 0 -> it's ok
  */
-int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList);
+int checkCommand(char *msg, int client, Channel *channel, ChannelList *channelList);
 
 /**
  * @brief Allows a user to leave the server

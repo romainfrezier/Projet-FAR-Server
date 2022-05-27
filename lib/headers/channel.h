@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include "list.h"
 #include "sema.h"
+#include "form.h"
 
 /**
  * @brief Channel data
@@ -45,6 +46,7 @@ struct Channel
     char *name;
     char *theme;
     List *clients;
+    FormList *formList;
     Channel *next;
     pthread_t thread;
     ChannelList *channelList;
@@ -209,5 +211,7 @@ void removeChannel(char *msg, ChannelList *channelList, int client, List *client
  * @return A string of the entire list
  */
 char *getAllUsers(ChannelList *list, int client, List *clients);
+
+Channel *getCurrentChannel(ChannelList *channels);
 
 #endif // CHANNEL_H_

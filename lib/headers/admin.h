@@ -39,7 +39,7 @@ char *generateAdminKey();
 
 /**
  * @brief Send a signal to channel to kill a user
- * 
+ *
  * @param channels list of channels
  * @param message message from client
  * @param client id of client who made the request
