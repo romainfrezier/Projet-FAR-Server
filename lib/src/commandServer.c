@@ -26,7 +26,6 @@
 #include "../headers/stringFunc.h"
 #include "../headers/tools.h"
 
-// Send a specific message to client selected
 void sendSpecificMessage(int client, char *message)
 {
     u_long sizeMessage = strlen(message) + 1;
@@ -42,7 +41,6 @@ void sendSpecificMessage(int client, char *message)
     }
 }
 
-// check which command the user give
 int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList)
 {
     printf("Command detected\n");
@@ -173,7 +171,6 @@ void shutdownServer(ChannelList* channelList, List* clients, int client)
     }
 }
 
-// Allows a user to leave the server
 void userQuit(int socket, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
 {
     pthread_mutex_lock(&mutexList);
@@ -184,7 +181,6 @@ void userQuit(int socket, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
     printf("\t• User %d has been stopped\n", socket);
 }
 
-// Check if a message contains insult. Return 0 if there is no insult
 int checkCensorship(char *message)
 {
     FILE *fp = fopen("lib/censorship_words.txt", "r");
@@ -239,7 +235,6 @@ void renameUser(char *msg, int client, List *sockets)
     }
 }
 
-// Allows sending a private message
 void sendPrivateMessage(char *msg, int client, List *sockets)
 {
     if (countSpaceCommand(msg, 2) == 1)
@@ -274,7 +269,6 @@ void sendPrivateMessage(char *msg, int client, List *sockets)
     }
 }
 
-// Sending a message to the client
 void * transmitMessage(void *sock_client)
 {
     tss *sock_cli = (tss *)sock_client;

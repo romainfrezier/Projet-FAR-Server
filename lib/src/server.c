@@ -26,14 +26,32 @@
 #include "../headers/channel.h"
 #include "../headers/list.h"
 
+/**
+ * @brief List of all the server channels
+ */
 ChannelList *channelList;
-int maxChannel = 10;
-unsigned int MAX_CONNEXION = 3;
+
+/**
+ * @brief Maximum number of channels
+ */
+int maxChannel = 5;
+
+/**
+ * @brief Maximum number of client per channel
+ */
+unsigned int MAX_CONNEXION = 5;
+
+/**
+ * @brief Default port of the server
+ */
 int defaultPort = 4000;
+
+/**
+ * @brief Number of channel in the server
+ */
 int channelCount = 0;
 
-// We want to create a send thread and a reception thread for each user
-int main(int argc, char *argv[])
+void launchServer()
 {
   signal(SIGINT, serverQuit);
   channelList = createChannelList(maxChannel);
@@ -159,7 +177,6 @@ void *generateChannel(void *channel)
   rk_sema_destroy(&sem);
 }
 
-// Reception of a client message
 void *receiveMessage(void *sock_client)
 {
   tsr *sock_cli = (tsr *)sock_client;

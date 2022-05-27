@@ -15,8 +15,8 @@
 /**
  * @brief Compare the entry with the regex
  *
- * @param entry : message to compare
- * @param model : regex
+ * @param entry message to compare
+ * @param model regex
  * @return 0 -> the entry match with the model
  */
 int regex(char *entry, char *model);
@@ -24,10 +24,10 @@ int regex(char *entry, char *model);
 /**
  * @brief Get the group made by the regex
  *
- * @param list : array to fill
- * @param n : number of groups wanted
- * @param message : message to compare
- * @param regexString : regex
+ * @param list array to fill
+ * @param n number of groups wanted
+ * @param message message to compare
+ * @param regexString regex
  */
 void getRegexGroup (char *list[],int n, char *message, char *regexString);
 

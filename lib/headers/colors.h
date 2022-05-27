@@ -15,36 +15,36 @@
 /**
  * @brief Print a green message
  *
- * @param message : string to print
+ * @param message string to print
  */
 void greenMessage(char *message);
 
 /**
  * @brief Print a blue message
  *
- * @param message : string to print
+ * @param message string to print
  */
 void blueMessage(char *message);
 
 /**
  * @brief Print a purple message
  *
- * @param message : string to print
+ * @param message string to print
  */
 void purpleMessage(char *message);
 
 /**
  * @brief Print a red message
  *
- * @param message : string to print
+ * @param message string to print
  */
 void redMessage(char *message);
 
 /**
  * @brief Print a red message and exit the process
- * @information Use it for errors
+ * @brief Use it for errors
  *
- * @param message : string to print
+ * @param message string to print
  */
 void redErrorMessage(char *message);
 

@@ -19,8 +19,14 @@
 #include "../headers/commandServer.h"
 #include "../headers/tools.h"
 
-
+/**
+ * @brief Default admin password
+ */
 char *adminKey = "1234";
+
+/**
+ * @brief Message send to all the channels (maximum size 100)
+ */
 char allMessage[100];
 
 char* generateAdminKey()
@@ -78,7 +84,6 @@ void sendAllUsersMessage(ChannelList *channels, char *message)
     }
 }
 
-// check the password give by a user
 void adminVerification(char *message, int client, List *sockets)
 {
     if (countSpaceCommand(message, 1) == 1)

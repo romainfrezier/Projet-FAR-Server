@@ -47,7 +47,6 @@ void *createNewChannel(void *cmd)
     return NULL;
 }
 
-// Allows the channel to stop and stop all the user connected
 void channelQuit(List *sockets, rk_sema sem, pthread_mutex_t mutexList)
 {
     // Shutdown of all user sockets

@@ -11,7 +11,6 @@
  */
 #include "../headers/stringFunc.h"
 
-// Split command, with loop and argument n for generalization. Return a table of string
 char** str_split(char *msg, int n)
 {
     int i = 0;
@@ -34,7 +33,6 @@ char** str_split(char *msg, int n)
     return array;
 }
 
-// count the number of space in a command
 int countSpaceCommand(char* cmd, int nbSpace){
     int spaceFound = 0;
     for(int i = 0; i <= strlen(cmd); i++)

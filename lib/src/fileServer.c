@@ -24,9 +24,12 @@
 #include "../headers/tools.h"
 #include "../headers/stringFunc.h"
 
+/**
+ * @brief Size of the block of bytes to send
+ */
 #define SIZE 1024
 
-// connect socket for get file
+
 void *fileGetThreadFunc(void *arg)
 {
   int socket = *((int *)arg);
@@ -70,7 +73,6 @@ void *fileGetThreadFunc(void *arg)
   return NULL;
 }
 
-// prepare the receiving of the file
 void receiveFile(fileStruct *fileInfo, int client, char *filename)
 {
   fileStruct *file = fileInfo;
@@ -84,7 +86,6 @@ void receiveFile(fileStruct *fileInfo, int client, char *filename)
   shutdown(client, 2);
 }
 
-// receive the file from the user
 void *fileTransferReception(void *receiveFileData)
 {
   trf *data = (trf *)receiveFileData;
@@ -133,7 +134,6 @@ void *fileTransferReception(void *receiveFileData)
   return NULL;
 }
 
-// list the file of the server
 char *listFile(char *folder)
 {
   DIR *d;
@@ -208,7 +208,6 @@ char *chooseNameFile(char *nameFile,int i)
     }
 }
 
-// connect socket for send file
 void *fileSendThreadFunc(void *arg)
 {
   FILE *fp;
@@ -288,7 +287,6 @@ void *fileSendThreadFunc(void *arg)
     return NULL;
 }
 
-// prepare the sending of the file
 void *prepareSendingFile(void *data)
 {
 
@@ -332,7 +330,6 @@ void *prepareSendingFile(void *data)
   return NULL;
 }
 
-// transfer the file to the user
 void sendFile(int client, fileStruct *file, char *name)
 {
 

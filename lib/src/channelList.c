@@ -23,8 +23,6 @@ ChannelList* createChannelList(int size){
     return newChannelList;
 }
 
-
-// check if the list is empty. Return 0 if the list is empty
 int channelListIsEmpty(ChannelList* list)
 {
     if (list->head == NULL)
@@ -37,7 +35,6 @@ int channelListIsEmpty(ChannelList* list)
     }
 }
 
-// add a user to the last position of the list
 void addLastChannel(ChannelList* list, Channel* channel)
 {
     if (list->freePlaces == 0)

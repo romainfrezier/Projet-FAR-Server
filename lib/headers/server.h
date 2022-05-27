@@ -23,10 +23,10 @@ typedef struct thread_sockets_receive tsr;
 /**
  * @brief Data for the thread that control message reception
  *
- * @param client : id of the client who send the message
- * @param clients : list of the clients in the channel
- * @param sem : semaphore that accept client
- * @param mutex : mutex on the list of client
+ * @param client id of the client who send the message
+ * @param clients list of the clients in the channel
+ * @param sem semaphore that accept client
+ * @param mutex mutex on the list of client
  */
 struct thread_sockets_receive
 {
@@ -44,10 +44,10 @@ typedef struct thread_sockets_send tss;
 /**
  * @brief Data for the thread that control message transmitting
  *
- * @param size : size of the message
- * @param message : message to send
- * @param client : id of the client who will receive the message
- * @param pseudoSender : pseudo of the client who send the message
+ * @param size size of the message
+ * @param message message to send
+ * @param client id of the client who will receive the message
+ * @param pseudoSender pseudo of the client who send the message
  */
 struct thread_sockets_send
 {
@@ -58,9 +58,14 @@ struct thread_sockets_send
 };
 
 /**
+ * @brief Launch the server program
+ */
+void launchServer();
+
+/**
  * @brief Generate a new channel
  *
- * @param channel_struct : channel data
+ * @param channel_struct channel data
  * @return NULL
  */
 void *generateChannel(void *channel_struct);
@@ -68,7 +73,7 @@ void *generateChannel(void *channel_struct);
 /**
  * @brief Receive a message from a client
  *
- * @param sock_client : Data of the client message
+ * @param sock_client Data of the client message
  * @return NULL
  */
 void *receiveMessage(void *sock_client);
@@ -76,15 +81,15 @@ void *receiveMessage(void *sock_client);
 /**
  * @brief Prepare to generate a new channel
  *
- * @param name : name of the new channel
- * @param theme : theme of the new channel
+ * @param name name of the new channel
+ * @param theme theme of the new channel
  */
 void prepareGenerateChannel(char *name, char *theme);
 
 /**
  * @brief Create a socket and bind it
  *
- * @param port : port of the socket
+ * @param port port of the socket
  * @return the socket descriptor (dS)
  */
 int createAndBindSocket(int port);
@@ -92,14 +97,14 @@ int createAndBindSocket(int port);
 /**
  * @brief Turn off the server
  *
- * @param n : signal int
+ * @param n signal int
  */
 void serverQuit(int n);
 
 /**
  * @brief Send a message to all the clients of the server
  *
- * @param signal : signal number
+ * @param signal signal number
  */
 void sendMessageForAllUsers(int signal);
 

@@ -39,29 +39,29 @@ struct rk_sema
 /**
  * @brief Initialize a semaphore
  *
- * @param s : the semaphore
- * @param value : the origin value of the semaphore
+ * @param s the semaphore
+ * @param value the origin value of the semaphore
  */
 void rk_sema_init(struct rk_sema *s, u_int32_t value);
 
 /**
  * @brief Wait a semaphore
  *
- * @param s : the semaphore
+ * @param s the semaphore
  */
 void rk_sema_wait(struct rk_sema *s);
 
 /**
  * @brief Post a semaphore
  *
- * @param s : the semaphore
+ * @param s the semaphore
  */
 void rk_sema_post(struct rk_sema *s);
 
 /**
  * @brief Destroy a semaphore
  *
- * @param s : the semaphore
+ * @param s the semaphore
  */
 void rk_sema_destroy(struct rk_sema *s);
 

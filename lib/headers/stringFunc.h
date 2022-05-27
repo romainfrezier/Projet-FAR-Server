@@ -19,8 +19,8 @@
 /**
  * @brief Split command, split a string at space
  *
- * @param msg : string to split
- * @param n : number of space in the string
+ * @param msg string to split
+ * @param n number of space in the string
  * @return table of string
  */
 char **str_split(char *msg, int n);
@@ -28,8 +28,8 @@ char **str_split(char *msg, int n);
 /**
  * @brief Check the number of space in a command
  *
- * @param cmd : command to check
- * @param nbSpace : number of space that the server expects
+ * @param cmd command to check
+ * @param nbSpace number of space that the server expects
  * @return 1 -> number of space in the command >= nbSpace
  * @return -1 -> number of space in the command < nbSpace
  */
@@ -38,8 +38,8 @@ int countSpaceCommand(char *cmd, int nbSpace);
 /**
  * @brief Remove a substring of the string
  *
- * @param str : string to analyze
- * @param sub : sub-string to find and remove
+ * @param str string to analyze
+ * @param sub sub-string to find and remove
  * @return the string without the sub-string
  */
 char *strremove(char *str, const char *sub);
