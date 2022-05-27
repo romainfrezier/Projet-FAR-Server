@@ -35,6 +35,20 @@ char allMessage[100];
  */
 int kickedId;
 
+/**
+ * @brief Mutex on all message
+ */
+pthread_mutex_t allMessageMutex;
+
+/**
+ * @brief Mutex on kick user
+ */
+pthread_mutex_t kickedIdMutex;
+
+
+pthread_mutex_init(allMessageMutex);
+pthread_mutex_init(kickedIdMutex);
+
 char *generateAdminKey()
 {
     char *key = (char *)malloc(10);
@@ -53,7 +67,7 @@ void prepareKick(ChannelList *channels, char *message, int client, List *sockets
         if (isUserAdmin(sockets, client) == 1)
         {
             char **mess = str_split(message, 2);
-            // mutex
+            pthread_mutex_lock(&kickedIdMutex);
             Channel *currentChannel = channels->head;
             int isFound = 0;
             while (currentChannel != NULL && isFound == 0)
@@ -70,7 +84,7 @@ void prepareKick(ChannelList *channels, char *message, int client, List *sockets
             {
                 sendSpecificMessage(client, "The user doesn't exist !");
             }
-            // fin mutex  
+            pthread_mutex_unlock(&kickedIdMutex);
         }
         else
         {
@@ -95,13 +109,13 @@ void kick(int client, List *sockets, rk_sema semaphore, pthread_mutex_t mutex)
 
 void sendAllUsersMessage(ChannelList *channels, char *message)
 {
-    // MUTEX
+    pthread_mutex_lock(&allMessageMutex);
     strcpy(allMessage, "");
     char *msg[2];
     getRegexGroup(msg, 2, message, "^/all *(.*)$");
     strcat(allMessage, "(ALL) ");
     strcat(allMessage, msg[1]);
-    // FIN MUTEX
+    pthread_mutex_unlock(&allMessageMutex);
     Channel *currentChannel = channels->head;
     while (currentChannel != NULL)
     {
