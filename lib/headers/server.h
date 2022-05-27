@@ -14,6 +14,7 @@
 
 #include "sema.h"
 #include "list.h"
+#include "channel.h"
 
 /**
  * @brief Data for the thread that control message reception
@@ -107,5 +108,13 @@ void serverQuit(int n);
  * @param signal signal number
  */
 void sendMessageForAllUsers(int signal);
+
+/**
+ * @brief Signal handler for kick a user through channel
+ *
+ * @param channels list of server channels
+ * @param pseudo pseudo of user kicked
+ */
+void kickUserFromServer(int signal);
 
 #endif // SERVER_H_

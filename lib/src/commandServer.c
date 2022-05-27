@@ -65,7 +65,7 @@ int checkCommand(char *msg, tsr *sock_cli, rk_sema sem, ChannelList *channelList
     else if (strcmp(strto, "/kick") == 0)
     {
         printf("Go to kick function\n");
-        kick(msg, (*sock_cli).client, (*sock_cli).clients,sem, (*sock_cli).mutex);
+        prepareKick(channelList, msg, (*sock_cli).client, (*sock_cli).clients);
     }
     else if (strcmp(strto, "/luser") == 0)
     {

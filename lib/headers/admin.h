@@ -5,9 +5,9 @@
  * @brief Admin functions
  * @version 0.1
  * @date 2022-05-26
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 #ifndef ADMIN_H_ /* Include guard */
 #define ADMIN_H_
@@ -26,22 +26,36 @@ extern char *adminKey;
 extern char allMessage[100];
 
 /**
+ * @brief id of kicked user
+ */
+extern int kickedId;
+
+/**
  * @brief Generate a random admin password for the server
  *
  * @return A string of the password
  */
-char* generateAdminKey();
+char *generateAdminKey();
+
+/**
+ * @brief Send a signal to channel to kill a user
+ * 
+ * @param channels list of channels
+ * @param message message from client
+ * @param client id of client who made the request
+ * @param sockets list of clients in the current channel
+ */
+void prepareKick(ChannelList *channels, char *message, int client, List *sockets);
 
 /**
  * @brief Remove a user from the chat server
  *
- * @param message message from the client
- * @param client id of the client who made the request
+ * @param client id of the client who will be kicked
  * @param sockets list of clients in the current channel
  * @param semaphore semaphore that accept client in the current channel
  * @param mutex mutex on the clients list
  */
-void kick(char *message, int client, List *sockets, rk_sema semaphore, pthread_mutex_t mutex);
+void kick(int client, List *sockets, rk_sema semaphore, pthread_mutex_t mutex);
 
 /**
  * @brief Check the password give by a user

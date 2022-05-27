@@ -14,6 +14,7 @@
 #include <string.h>
 #include <signal.h>
 
+#include "../headers/channel.h"
 #include "../headers/admin.h"
 #include "../headers/stringFunc.h"
 #include "../headers/commandServer.h"
@@ -29,9 +30,14 @@ char *adminKey = "1234";
  */
 char allMessage[100];
 
-char* generateAdminKey()
+/**
+ * @brief id of kicked user
+ */
+int kickedId;
+
+char *generateAdminKey()
 {
-    char* key = (char*) malloc(10);
+    char *key = (char *)malloc(10);
     for (int i = 0; i < 10; i++)
     {
         char randomletter = 'A' + (rand() % 26);
@@ -40,23 +46,31 @@ char* generateAdminKey()
     return key;
 }
 
-void kick(char *message, int client, List *sockets, rk_sema semaphore, pthread_mutex_t mutex)
+void prepareKick(ChannelList *channels, char *message, int client, List *sockets)
 {
     if (countSpaceCommand(message, 1) == 1)
     {
         if (isUserAdmin(sockets, client) == 1)
         {
             char **mess = str_split(message, 2);
-            int idKickedClient = getIdByPseudo(sockets, mess[1]);
-            if (idKickedClient != -1)
+            // mutex
+            Channel *currentChannel = channels->head;
+            int isFound = 0;
+            while (currentChannel != NULL && isFound == 0)
             {
-                printf("User %d has been kicked by admin %d \n", idKickedClient, client);
-                userQuit(idKickedClient, sockets, semaphore, mutex);
+                kickedId = getIdByPseudo(currentChannel->clients, mess[1]);
+                if (kickedId != -1)
+                {
+                    pthread_kill(currentChannel->thread, SIGUSR1);
+                    isFound = 1;
+                }
+                currentChannel = currentChannel->next;
             }
-            else
+            if (isFound == 0)
             {
                 sendSpecificMessage(client, "The user doesn't exist !");
             }
+            // fin mutex  
         }
         else
         {
@@ -69,13 +83,25 @@ void kick(char *message, int client, List *sockets, rk_sema semaphore, pthread_m
     }
 }
 
+void kick(int client, List *sockets, rk_sema semaphore, pthread_mutex_t mutex)
+{
+    if (client != -1)
+    {
+        printf("User %d has been kicked by an admin\n", client);
+        sendSpecificMessage(client, "\n\033[0;31mYou have been by kick by an admin\n");
+        userQuit(client, sockets, semaphore, mutex);
+    }
+}
+
 void sendAllUsersMessage(ChannelList *channels, char *message)
 {
+    // MUTEX
     strcpy(allMessage, "");
-    char* msg[2];
+    char *msg[2];
     getRegexGroup(msg, 2, message, "^/all *(.*)$");
     strcat(allMessage, "(ALL) ");
     strcat(allMessage, msg[1]);
+    // FIN MUTEX
     Channel *currentChannel = channels->head;
     while (currentChannel != NULL)
     {

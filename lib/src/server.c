@@ -79,6 +79,17 @@ void sendMessageForAllUsers(int signal)
   greenMessage("Message transmitted to all\n");
 }
 
+void kickUserFromServer(int signal){
+  Channel *currentChannel = channelList->head;
+  while (currentChannel != NULL)
+  {
+    if (currentChannel->thread == pthread_self()){ //check if the thread is the current channel thread
+      kick(kickedId, currentChannel->clients, currentChannel->semaphore, currentChannel->mutex);
+    }
+    currentChannel = currentChannel->next;
+  }
+}
+
 void prepareGenerateChannel(char *name, char *theme)
 {
   Channel *channelData = (Channel *)malloc(sizeof(Channel));
@@ -133,6 +144,7 @@ void *generateChannel(void *channel)
   pthread_t fileSendThread;
   pthread_create(&fileSendThread, NULL, fileSendThreadFunc, argSend);
   signal(SIGCHLD, sendMessageForAllUsers);
+  signal(SIGUSR1, kickUserFromServer);
   while (1)
   {
     // Users are accepted until max allow
