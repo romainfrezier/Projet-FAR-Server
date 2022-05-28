@@ -75,7 +75,6 @@ char *listForm(FormList *list)
     char *finalString = (char *)malloc(strlen(formList));
     int currentIndex = 0;
     strcpy(finalString, formList);
-    size_t bufferSize = 150;
     char *form = (char*)malloc(170);
     while (currentForm != NULL)
     {
