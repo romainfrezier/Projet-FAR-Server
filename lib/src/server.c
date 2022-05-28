@@ -228,7 +228,7 @@ void *receiveMessage(void *sock_client)
       }
     } while (check == 0);
 
-    sendSpecificMessage((*sock_cli).client, "Connected !");
+    sendSpecificMessage((*sock_cli).client, "Connected");
     blueMessage("Pseudo accepted : ");
     blueMessage(pseudo);
     printf("\n");

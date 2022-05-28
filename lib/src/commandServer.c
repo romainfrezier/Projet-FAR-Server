@@ -257,25 +257,34 @@ int checkCensorship(char *message)
 
 void renameUser(char *msg, int client, List *sockets)
 {
-    char **mess = str_split(msg, 2);
-    char *newPseudo = mess[1];
-    if (pseudoInList(sockets, newPseudo) == 0)
+    if (regex(msg, "^\\/rename +([a-zA-Z0-9\\.-]+) *$") == 0)
     {
-        sendSpecificMessage(client, "Username already used !\nPlease choose another username");
+        char *mess[2];
+        getRegexGroup(mess, 2, msg, "^\\/rename +([a-zA-Z0-9\\.-]+) *$");
+        char *newPseudo = mess[1];
+        if (pseudoInList(sockets, newPseudo) == 0)
+        {
+            sendSpecificMessage(client, "Username already used !\nPlease choose another username");
+        }
+        else
+        {
+            setPseudo(sockets, client, newPseudo);
+        }
     }
     else
     {
-        setPseudo(sockets, client, newPseudo);
+        sendSpecificMessage(client, "\nThe command is : [/rename newPseudo] \n\nUsername must have only letters, numbers, or . -\nUsername can have a length of 1 to 50 characters\n");
     }
+
 }
 
 void sendPrivateMessage(char *msg, int client, List *sockets)
 {
-    if (countSpaceCommand(msg, 2) == 1)
+    if (regex(msg, "^\\/pm +([a-zA-Z0-9\\.-]+) +(.*[^ ]) *$") == 0)
     {
-        char **mess = str_split(msg, 3);
-        char *target = mess[1];
-        int id = getIdByPseudo(sockets, target);
+        char *mess[3];
+        getRegexGroup(mess, 3, msg, "^\\/pm +([a-zA-Z0-9\\.-]+) +(.*[^ ]) *$");
+        int id = getIdByPseudo(sockets, mess[1]);
         if (id != -1)
         {
             char *pseudo = getPseudoById(sockets, client);
@@ -299,7 +308,7 @@ void sendPrivateMessage(char *msg, int client, List *sockets)
     }
     else
     {
-        sendSpecificMessage(client, "The command is : [/pm targetPseudo yourMessage] \n");
+        sendSpecificMessage(client, "\nThe command is : [/pm targetPseudo yourMessage] \n");
     }
 }
 

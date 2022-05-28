@@ -45,7 +45,6 @@ void *createNewChannel(void *cmd)
     char *arr[3];
     char *message = (char*)cmd;
     getRegexGroup(arr, 3, message, "/cchannel +([^ ]+) +(.+) *$");
-    // char **msg = str_split(cmd, 3);
     prepareGenerateChannel(arr[1], arr[2]);
     return NULL;
 }
@@ -116,7 +115,7 @@ void modifyChannel(ChannelList *channelList, char *message, int client, List *cl
         }
         else
         {
-            sendSpecificMessage(client, "\nThe command is /mchannel [-n][-t] number content\n");
+            sendSpecificMessage(client, "\nThe command is : [/mchannel option number content]\n");
         }
         // free(arrOne);
         // free(arrTwo);
@@ -128,42 +127,51 @@ void modifyChannel(ChannelList *channelList, char *message, int client, List *cl
 }
 void joinChannel(char *msg, ChannelList *channelList, int idClient, List *clients)
 {
-    char **cmd = str_split(msg, 1);
-    int index = atoi(cmd[1]);
-    Channel *chosenChannel = getChannelByIndex(channelList, index);
-    if (chosenChannel == NULL)
+    if (regex(msg, "^\\/jchannel +([0-9]{1,2}) *$"))
     {
-        sendSpecificMessage(idClient, "\nThis channel does not exist !\n");
-    }
-    else if (pseudoInList(chosenChannel->clients, getPseudoById(clients, idClient)) == 0)
-    {
-        sendSpecificMessage(idClient, "\nYou already are in the channel !\n");
+        char *cmd[2];
+        getRegexGroup(cmd, 2, msg,"^\\/jchannel +([0-9]{1,2}) *$");
+        int index = atoi(cmd[1]);
+        Channel *chosenChannel = getChannelByIndex(channelList, index);
+        if (chosenChannel == NULL)
+        {
+            sendSpecificMessage(idClient, "\nThis channel does not exist !\n");
+        }
+        else if (pseudoInList(chosenChannel->clients, getPseudoById(clients, idClient)) == 0)
+        {
+            sendSpecificMessage(idClient, "\nYou already are in the channel !\n");
+        }
+        else
+        {
+            int port = chosenChannel->port;
+            char *portString = (char *)malloc(4 * sizeof(char));
+            sprintf(portString, "%d", port);
+
+            char *sendCommand = (char *)malloc(strlen(portString) + strlen(cmd[0]) + 1);
+            strcpy(sendCommand, cmd[0]);
+            strcat(sendCommand, " ");
+            strcat(sendCommand, portString);
+
+            // We add to the client to the good channel
+            changeACforJoin(clients, idClient);
+            Client *client = getClientById(clients, idClient);
+            char *clientPseudo = getPseudoById(clients, idClient);
+            addFirstClient(chosenChannel->clients, client, clientPseudo);
+
+            // We delete from this channel the good client
+            delVal(clients, idClient);
+
+            // We send the port to the client
+            sendSpecificMessage(idClient, sendCommand);
+//        free(portString);
+//        free(sendCommand);
+        }
     }
     else
     {
-        int port = chosenChannel->port;
-        char *portString = (char *)malloc(4 * sizeof(char));
-        sprintf(portString, "%d", port);
-
-        char *sendCommand = (char *)malloc(strlen(portString) + strlen(cmd[0]) + 1);
-        strcpy(sendCommand, cmd[0]);
-        strcat(sendCommand, " ");
-        strcat(sendCommand, portString);
-
-        // We add to the client to the good channel
-        changeACforJoin(clients, idClient);
-        Client *client = getClientById(clients, idClient);
-        char *clientPseudo = getPseudoById(clients, idClient);
-        addFirstClient(chosenChannel->clients, client, clientPseudo);
-
-        // We delete from this channel the good client
-        delVal(clients, idClient);
-
-        // We send the port to the client
-        sendSpecificMessage(idClient, sendCommand);
-//        free(portString);
-//        free(sendCommand);
+        sendSpecificMessage(idClient, "\nThe command is : [/jchannel number]\n");
     }
+
 }
 
 void checkChannel(List *clients, int client, int freePlaces, char *message)
@@ -184,7 +192,7 @@ void checkChannel(List *clients, int client, int freePlaces, char *message)
             }
             else
             {
-                sendSpecificMessage(client, "\nThe command is /cchannel channelName channelTheme !\n");
+                sendSpecificMessage(client, "\nThe command is : [/cchannel channelName channelTheme] !\n");
             }
         }
     }
@@ -196,25 +204,35 @@ void checkChannel(List *clients, int client, int freePlaces, char *message)
 
 void removeChannel(char *msg, ChannelList *channelList, int client, List *clients)
 {
-    char **cmd = str_split(msg, 1);
-    int index = atoi(cmd[1]);
-    if (index == 1)
+    if (regex(msg, "^\\/rmchannel +([0-9]{1,2}) *$"))
     {
-        sendSpecificMessage(client, "\nYou can not remove the first channel\n");
-    }
-    else
-    {
-        Channel *chosenChannel = getChannelByIndex(channelList, index);
-        Client *current = chosenChannel->clients->head;
-        while (current != NULL)
+        char *cmd[2];
+        getRegexGroup(cmd, 2, msg, "^\\/rmchannel +([0-9]{1,2}) *$");
+        int index = atoi(cmd[1]);
+        if (index == 1)
         {
-            sendSpecificMessage(current->id, "The channel where you are will be removed.\nYou will be ejecting from the server");
-            current = current->next;
+            sendSpecificMessage(client, "\nYou can not remove the first channel\n");
         }
-        channelQuit(chosenChannel->clients, chosenChannel->semaphore, chosenChannel->mutex);
+        else
+        {
+            Channel *chosenChannel = getChannelByIndex(channelList, index);
+            Client *current = chosenChannel->clients->head;
+            while (current != NULL)
+            {
+                sendSpecificMessage(current->id, "The channel where you are will be removed.\nYou will be ejecting from the server");
+                current = current->next;
+            }
+            channelQuit(chosenChannel->clients, chosenChannel->semaphore, chosenChannel->mutex);
 //        free(chosenChannel->theme);
 //        free(chosenChannel->name);
 //        free(chosenChannel);
-        delChannel(channelList, index);
+            delChannel(channelList, index);
+        }
     }
+    else
+    {
+        sendSpecificMessage(client, "\nThe command is : [/rmchannel number]\n");
+    }
+
+
 }

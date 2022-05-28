@@ -86,10 +86,17 @@ char *listForm(FormList *list)
         strcat(form, indexString);
         strcat(form, ". ");
         strcat(form, currentForm->question);
-        char expected[10];
-        sprintf(expected, "%d", (currentForm->answerExpected - currentForm->answerNumber));
         strcat(form, " (");
-        strcat(form, expected);
+        if ((currentForm->answerExpected - currentForm->answerNumber) < 0)
+        {
+            strcat(form, "0");
+        }
+        else
+        {
+            char expected[10];
+            sprintf(expected, "%d", (currentForm->answerExpected - currentForm->answerNumber));
+            strcat(form, expected);
+        }
         strcat(form, " answer expected)");
         strcat(form, "\n");
         strcat(form, "\t\t• ");
@@ -97,13 +104,13 @@ char *listForm(FormList *list)
         sprintf(numberOfYes, "%d", currentForm->yes);
         strcat(form, "yes : ");
         strcat(form, numberOfYes);
-        strcat(form, "\n");
+        strcat(form, " vote\n");
         strcat(form, "\t\t• ");
         char numberOfNo[10];
         sprintf(numberOfNo, "%d", currentForm->no);
         strcat(form, "no : ");
         strcat(form, numberOfNo);
-        strcat(form, "\n");
+        strcat(form, " vote\n");
         finalString = (char *)realloc(finalString, (strlen(finalString) + strlen(form)) * sizeof(char));
         strcat(finalString, form);
         currentForm = currentForm->next;
