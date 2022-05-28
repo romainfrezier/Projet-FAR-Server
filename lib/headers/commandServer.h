@@ -50,10 +50,10 @@ void userQuit(int socket, List *sockets, rk_sema sem, pthread_mutex_t mutex);
  * @brief Check if a message contains insult
  *
  * @param message message of the client
- * @return 0 -> there is no insult
- * @return 1 -> there is insult
+ * @return NULL -> there is no insult
+ * @return String -> there is insult
  */
-int checkCensorship(char *message);
+char *checkCensorship(char *message);
 
 /**
  * @brief Change the username of the client

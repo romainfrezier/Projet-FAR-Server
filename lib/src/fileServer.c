@@ -180,7 +180,15 @@ char *chooseNameFile(char *nameFile,int i)
     if (found == 0)
     {
         // change name
-        getRegexGroup(arr, 3, nameFile, "^(.*)(\\..*)$");
+        if (regex(nameFile, "^(.*)(\\..*)$") == 0)
+        {
+          getRegexGroup(arr, 3, nameFile, "^(.*)(\\..*)$");
+        }
+        else
+        {
+          arr[1] = nameFile;
+          arr[2] = "";
+        }
         int regexRes = regex(arr[1], "^(.*)(-[0-9]+).*$");
         char *cpy = (char*)malloc(strlen(arr[1]));
         strcpy(cpy, arr[1]);

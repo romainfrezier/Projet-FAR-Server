@@ -129,8 +129,7 @@ void prepareRemoveByIndex(char *msg, FormList *list, int client, List *clients)
 {
     if (isUserAdmin(clients, client) == 1)
     {
-        int resRegex = regex(msg, "^/rmform +([0-9]{1,2}) *$");
-        if (resRegex == 0)
+        if (regex(msg, "^/rmform +([0-9]{1,2}) *$") == 0)
         {
             char *arr[2];
             getRegexGroup(arr, 2, msg, "^/rmform +([0-9]{1,2}) *$");
@@ -184,8 +183,7 @@ void prepareAddFormFirst(FormList *forms, char *message, int client, List *clien
 {
     if (isUserAdmin(clients, client) == 1)
     {
-        int resRegex = regex(message, "^/cform +(.*[^ ]) +([0-9]{1,2}) *$");
-        if (resRegex == 0)
+        if (regex(message, "^/cform +(.*[^ ]) +([0-9]{1,2}) *$") == 0)
         {
             char *arr[3];
             getRegexGroup(arr, 3, message, "^/cform +(.*[^ ]) +([0-9]{1,2}) *$");

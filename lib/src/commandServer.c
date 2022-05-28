@@ -181,7 +181,14 @@ void sendAllMessage(char *msg, ChannelList *channelList, List *clients, int clie
 {
     if (isUserAdmin(clients, client) == 1)
     {
-        sendAllUsersMessage(channelList, msg);
+        if (regex(msg, "^/all *(.*)$") == 0)
+        {
+            sendAllUsersMessage(channelList, msg);
+        }
+        else
+        {
+            sendSpecificMessage(client, "\nThe command is : [/all message]\n");
+        }
     }
     else
     {
@@ -215,7 +222,7 @@ void userQuit(int socket, List *sockets, rk_sema sem, pthread_mutex_t mutexList)
     printf("\t• User %d has been stopped\n", socket);
 }
 
-int checkCensorship(char *message)
+char* checkCensorship(char *message)
 {
     FILE *fp = fopen("lib/censorship_words.txt", "r");
     if (fp == NULL)
@@ -232,9 +239,10 @@ int checkCensorship(char *message)
     {
         char *word = strtok(line, "\n");
         model = realloc(model, strlen(model) + strlen(word) + strlen("(|)"));
-        strcat(model, "(");
+        // strcat(model, "(");
         strcat(model, word);
-        strcat(model, ")|");
+        // strcat(model, ")|");
+        strcat(model, "|");
     }
     model[strlen(model) - 1] = ')';
     char *end = ".*$";
@@ -242,16 +250,20 @@ int checkCensorship(char *message)
     strcat(model, end);
     fclose(fp);
     free(line);
-
-    int regexRes = regex(message, model);
     //    free(model);
-    if (regexRes == 0)
+    if (regex(message, model) == 0)
     {
-        return 1;
+        char *arr[2];
+        getRegexGroup(arr, 2, message, model);
+        char *censorMessage = (char *)malloc(150);
+        strcat(censorMessage, "\n\033[0;31mDon't insult! Your message has not been sent...\nYou insult was : ");
+        strcat(censorMessage, arr[1]);
+        strcat(censorMessage, "\n");
+        return censorMessage;
     }
     else
     {
-        return 0;
+        return NULL;
     }
 }
 
@@ -347,15 +359,23 @@ void addWord(char *message, List *clients, int client)
 {
     if (isUserAdmin(clients, client) == 1)
     {
-        char *words[2];
-        getRegexGroup(words, 2, message, "^/addword +([^ ]+) *$");
-        char *wordToAdd = (char *)malloc(strlen(words[1]) + 2);
-        strcpy(wordToAdd, "\n");
-        strcat(wordToAdd, words[1]);
-        FILE *fp;
-        fp = fopen("lib/censorship_words.txt", "a");
-        fprintf(fp, "%s", wordToAdd);
-        fclose(fp);
+        if (regex(message, "^/addword +([^ ]+) *$") == 0)
+        {
+            char *words[2];
+            getRegexGroup(words, 2, message, "^/addword +([^ ]+) *$");
+            char *wordToAdd = (char *)malloc(strlen(words[1]) + 2);
+            strcpy(wordToAdd, "\n");
+            strcat(wordToAdd, words[1]);
+            FILE *fp;
+            fp = fopen("lib/censorship_words.txt", "a");
+            fprintf(fp, "%s", wordToAdd);
+            fclose(fp);
+        }
+        else
+        {
+            sendSpecificMessage(client, "The command is : [/addword word]");
+        }
+
         //        free(wordToAdd);
     }
     else

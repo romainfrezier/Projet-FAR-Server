@@ -71,63 +71,70 @@ void modifyChannel(ChannelList *channelList, char *message, int client, List *cl
     getRegexGroup(arrTwo, 4, message, "^/mchannel +-(t) +([0-9]{1}) +(.*) *$");
     getRegexGroup(arrThree, 5, message, "^/mchannel +-(nt|tn) +([0-9]{1}) +([^ ]+) +([^ ].*) *$");
 
-    if (isUserAdmin(clients, client) == 1)
+    if (regex(message, "^/mchannel +-(nt|tn|t|n) +([0-9]{1}) +(.*) *$") == 0)
     {
-        if (strcmp(arrOne[1], "n") == 0)
+        if (isUserAdmin(clients, client) == 1)
         {
-            int index = atoi(arrOne[2]);
-            if (index == 1)
+            if (strcmp(arrOne[1], "n") == 0)
             {
-                sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
+                int index = atoi(arrOne[2]);
+                if (index == 1)
+                {
+                    sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
+                }
+                else
+                {
+                    Channel *chosenChannel = getChannelByIndex(channelList, index);
+                    chosenChannel->theme = arrOne[3];
+                }
+            }
+            else if (strcmp(arrTwo[1], "t") == 0)
+            {
+                int index = atoi(arrTwo[2]);
+                if (index == 1)
+                {
+                    sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
+                }
+                else
+                {
+                    Channel *chosenChannel = getChannelByIndex(channelList, index);
+                    chosenChannel->name = arrTwo[3];
+                }
+            }
+            else if (strcmp(arrThree[1], "tn") == 0 || strcmp(arrThree[1], "nt") == 0)
+            {
+                int index = atoi(arrThree[2]);
+                if (index == 1)
+                {
+                    sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
+                }
+                else
+                {
+                    Channel *chosenChannel = getChannelByIndex(channelList, index);
+                    chosenChannel->name = arrThree[3];
+                    chosenChannel->theme = arrThree[4];
+                }
             }
             else
             {
-                Channel *chosenChannel = getChannelByIndex(channelList, index);
-                chosenChannel->theme = arrOne[3];
+                sendSpecificMessage(client, "\nThe command is : [/mchannel option number content]\n");
             }
-        }
-        else if (strcmp(arrTwo[1], "t") == 0)
-        {
-            int index = atoi(arrTwo[2]);
-            if (index == 1)
-            {
-                sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
-            }
-            else
-            {
-                Channel *chosenChannel = getChannelByIndex(channelList, index);
-                chosenChannel->name = arrTwo[3];
-            }
-        }
-        else if (strcmp(arrThree[1], "tn") == 0 || strcmp(arrThree[1], "nt") == 0)
-        {
-            int index = atoi(arrThree[2]);
-            if (index == 1)
-            {
-                sendSpecificMessage(client, "\nYou can not modify the channel number 1\n");
-            }
-            else
-            {
-                Channel *chosenChannel = getChannelByIndex(channelList, index);
-                chosenChannel->name = arrThree[3];
-                chosenChannel->theme = arrThree[4];
-            }
+            // free(arrOne);
+            // free(arrTwo);
         }
         else
         {
-            sendSpecificMessage(client, "\nThe command is : [/mchannel option number content]\n");
+            sendSpecificMessage(client, "\nYou can't modify a channel if your are not an admin\n");
         }
-        // free(arrOne);
-        // free(arrTwo);
     }
     else
     {
-        sendSpecificMessage(client, "\nYou can't modify a channel if your are not an admin\n");
+        sendSpecificMessage(client, "\nThe command is : [/mchannel option number content]\n");
     }
 }
 void joinChannel(char *msg, ChannelList *channelList, int idClient, List *clients)
 {
-    if (regex(msg, "^\\/jchannel +([0-9]{1,2}) *$"))
+    if (regex(msg, "^\\/jchannel +([0-9]{1,2}) *$") == 0)
     {
         char *cmd[2];
         getRegexGroup(cmd, 2, msg,"^\\/jchannel +([0-9]{1,2}) *$");
@@ -204,7 +211,7 @@ void checkChannel(List *clients, int client, int freePlaces, char *message)
 
 void removeChannel(char *msg, ChannelList *channelList, int client, List *clients)
 {
-    if (regex(msg, "^\\/rmchannel +([0-9]{1,2}) *$"))
+    if (regex(msg, "^\\/rmchannel +([0-9]{1,2}) *$") == 0)
     {
         char *cmd[2];
         getRegexGroup(cmd, 2, msg, "^\\/rmchannel +([0-9]{1,2}) *$");

@@ -268,12 +268,12 @@ void *receiveMessage(void *sock_client)
     }
     blueMessage("Message received\n");
 
-    int censorship = checkCensorship(msg);
+    char* censorship = checkCensorship(msg);
 
     // check censorship before everything
-    if (censorship != 0)
+    if (censorship != NULL)
     {
-      sendSpecificMessage((*sock_cli).client, "\033[0;31m\nDon't insult! Your message has not been sent...\n");
+      sendSpecificMessage((*sock_cli).client, censorship);
     }
     else if (msg[0] == '/')
     {

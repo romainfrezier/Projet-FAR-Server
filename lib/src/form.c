@@ -33,8 +33,7 @@ Form *createForm(char *question, int maxAnswers)
 
 void prepareAnswer(char *message, int client, FormList *forms, List *clients)
 {
-    int resRegex = regex(message, "^/aform +([0-9]{1}) +(Yes|yes|y|Y|No|no|n|N) *$");
-    if (resRegex == 0)
+    if (regex(message, "^/aform +([0-9]{1}) +(Yes|yes|y|Y|No|no|n|N) *$") == 0)
     {
         char *arr[3];
         getRegexGroup(arr, 3, message, "^/aform +([0-9]{1}) +(Yes|yes|Y|y|No|no|N|n) *$");
@@ -80,8 +79,7 @@ void answerForm( int answer, Form *form , int client, char *pseudo)
 
 void prepareSeeResults(int client, char *msg, FormList *list)
 {
-    int resRegex = regex(msg, "^/sform +([0-9]{1,2}) *$");
-    if (resRegex == 0)
+    if (regex(msg, "^/sform +([0-9]{1,2}) *$") == 0)
     {
         char *arr[2];
         getRegexGroup(arr, 2, msg, "^/sform +([0-9]{1,2}) *$");
