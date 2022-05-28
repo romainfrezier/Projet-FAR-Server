@@ -138,7 +138,7 @@ int checkCommand(char *msg, int client, Channel *channel, ChannelList *channelLi
     else if (strcmp(strto, "/aform") == 0)
     {
         printf("Go to anwser form function\n");
-        checkAnswer(msg, client, currentChannel->formList);
+        prepareAnswer(msg, client, currentChannel->formList, currentChannel->clients);
 
     }
     else if (strcmp(strto, "/rmform") == 0)

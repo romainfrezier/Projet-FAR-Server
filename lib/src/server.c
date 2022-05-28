@@ -53,7 +53,8 @@ int channelCount = 0;
 
 void launchServer()
 {
-  signal(SIGINT, serverQuit);
+  signal(SIGINT, serverQuit); // ^C
+  signal(SIGTERM, serverQuit); // end of a terminal
   channelList = createChannelList(maxChannel);
   prepareGenerateChannel("Welcome", "The home channel !");
   // Server shutdown

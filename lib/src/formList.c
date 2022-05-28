@@ -1,10 +1,21 @@
+/**
+ * @file formList.c
+ * @authors Romain FREZIER
+ * @authors Etienne TILLIER
+ * @brief Form list functions implementation
+ * @version 0.1
+ * @date 2022-05-26
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "../headers/form.h"
 #include "../headers/tools.h"
 #include "../headers/commandServer.h"
-#include "../headers/stringFunc.h"
 
 FormList *createFormList(int size)
 {
@@ -64,10 +75,11 @@ char *listForm(FormList *list)
     char *finalString = (char *)malloc(strlen(formList));
     int currentIndex = 0;
     strcpy(finalString, formList);
-    char *form = (char*)malloc(130);
+    size_t bufferSize = 150;
+    char *form = (char*)malloc(170);
     while (currentForm != NULL)
     {
-        bzero(form, 130);
+        bzero(form, 170);
         currentIndex++;
         strcat(form, "\t");
         char indexString[10];
@@ -75,6 +87,11 @@ char *listForm(FormList *list)
         strcat(form, indexString);
         strcat(form, ". ");
         strcat(form, currentForm->question);
+        char expected[10];
+        sprintf(expected, "%d", (currentForm->answerExpected - currentForm->answerNumber));
+        strcat(form, " (");
+        strcat(form, expected);
+        strcat(form, " answer expected)");
         strcat(form, "\n");
         strcat(form, "\t\t• ");
         char numberOfYes[10];

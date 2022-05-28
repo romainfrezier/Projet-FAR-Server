@@ -28,26 +28,21 @@ void getRegexGroup (char *list[],int n, char *message, char *model) {
 
     size_t maxGroups = n;
     regmatch_t groupArray[maxGroups];
+    regcomp(&regexCompiled, model, REG_EXTENDED);
 
-    int regexRes = regex( message, model);
-
-    if (regexRes == 0){
-        regcomp(&regexCompiled, model, REG_EXTENDED);
-
-        if (regexec(&regexCompiled, message, maxGroups, groupArray, 0) == 0) {
-            for (int i = 0; i < maxGroups; i++) {
-                if (groupArray[i].rm_so == (size_t)-1) {
-                    break;  // No more groups
-                }
-
-                char sourceCopy[strlen(message) + 1];
-                strcpy(sourceCopy, message);
-                sourceCopy[groupArray[i].rm_eo] = 0;
-
-                list[i] = (char *)malloc(strlen(sourceCopy + groupArray[i].rm_so));
-                strcpy(list[i], sourceCopy + groupArray[i].rm_so);
+    if (regexec(&regexCompiled, message, maxGroups, groupArray, 0) == 0) {
+        for (int i = 0; i < maxGroups; i++) {
+            if (groupArray[i].rm_so == (size_t)-1) {
+                break;  // No more groups
             }
+
+            char sourceCopy[strlen(message) + 1];
+            strcpy(sourceCopy, message);
+            sourceCopy[groupArray[i].rm_eo] = 0;
+
+            list[i] = (char *)malloc(strlen(sourceCopy + groupArray[i].rm_so));
+            strcpy(list[i], sourceCopy + groupArray[i].rm_so);
         }
-        regfree(&regexCompiled);
     }
+    regfree(&regexCompiled);
 }

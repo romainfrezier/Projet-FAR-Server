@@ -28,8 +28,8 @@ void sendSpecificMessage(int client, char *message);
  * @brief Check which command is made by the client
  *
  * @param msg message from the client
- * @param sock_cli list of the clients in the current channel
- * @param sem semaphore that accept clients
+ * @param client client who made the message
+ * @param channel data about the current channel
  * @param channelList list of channels in the server
  * @return -1 -> the user make a /quit
  * @return 0 -> it's ok

@@ -1,5 +1,5 @@
 /**
- * @file fileServer.h
+ * @file fileServer.c
  * @authors Romain FREZIER
  * @authors Etienne TILLIER
  * @brief File functions implementation
