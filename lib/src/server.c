@@ -39,7 +39,7 @@ int maxChannel = 5;
 /**
  * @brief Maximum number of client per channel
  */
-unsigned int MAX_CONNEXION = 5;
+unsigned int MAX_CONNEXION = 100;
 
 /**
  * @brief Default port of the server
